@@ -60,7 +60,7 @@ public class AuthController {
             resp.put("role", userDetails.getAuthorities().stream().findFirst().map(GrantedAuthority::getAuthority).orElse(""));
             return ResponseEntity.ok(resp);
         } catch (AuthenticationException ex) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario o contraseña inválidos");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario o contraseña no válidos");
         }
     }
 
