@@ -63,7 +63,7 @@ public class TipsterRegistrationStrategy implements UserRegistrationStrategy {
         userEntity.setPassword(passwordEncoder.encode(tipsterReq.getPassword()));
 
         // Se busca el rol base del sistema; si no existe, se crea en ese momento.
-        RoleEntity role = roleRepository.findByName("USER").orElseGet(() -> {
+        RoleEntity role = roleRepository.findByName("TIPSTER").orElseGet(() -> {
             RoleEntity r = new RoleEntity();
             r.setName("USER");
             return roleRepository.save(r);
@@ -83,12 +83,12 @@ public class TipsterRegistrationStrategy implements UserRegistrationStrategy {
         tipsterProfileRepository.save(tipster);
 
         // Se prepara el contenido del correo de bienvenida posterior al registro.
-        String subject = "¡Bienvenido a Pickados!";
-        String text = "<h1>Hola, " + tipsterReq.getName() + "</h1>" +
-                "<p>Tu registro como Tipster ha sido exitoso.</p>" +
-                "<p>¡Gracias por unirte a nosotros!</p>";
+//        String subject = "¡Bienvenido a Pickados!";
+//        String text = "<h1>Hola, " + tipsterReq.getName() + "</h1>" +
+//                "<p>Tu registro como Tipster ha sido exitoso.</p>" +
+//                "<p>¡Gracias por unirte a nosotros!</p>";
         // Se envía un correo HTML de confirmación al email proporcionado por el usuario.
-        emailService.sendHtmlEmail(tipsterReq.getEmail(), subject, text);
+//        emailService.sendHtmlEmail(tipsterReq.getEmail(), subject, text);
     }
 
     /**
