@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 
-public class AuthRequest {
+public class AuthRequestDTO {
     @NotNull
     @NotEmpty
     private String username;
@@ -13,19 +13,19 @@ public class AuthRequest {
     @NotEmpty
     private String password;
 
-    public @NotNull @NotEmpty String getUsername() {
+    public String getUsername() {
         return username;
     }
 
-    public void setUsername(@NotNull @NotEmpty String username) {
+    public void setUsername(String username) {
         this.username = username;
     }
 
-    public @NotNull @NotEmpty String getPassword() {
+    public String getPassword() {
         return password;
     }
 
-    public void setPassword(@NotNull @NotEmpty String password) {
+    public void setPassword(String password) {
         this.password = password;
     }
 }

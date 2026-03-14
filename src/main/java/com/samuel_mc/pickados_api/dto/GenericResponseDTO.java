@@ -4,7 +4,6 @@ import lombok.Data;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -13,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class GenericResponse<T> {
+public class GenericResponseDTO<T> {
     private boolean success;       // Indica si la operación fue exitosa
     private String code;           // Código interno o de error, ej. "OK", "USER_NOT_FOUND", etc.
     private String message;        // Mensaje legible para el usuario o desarrollador
