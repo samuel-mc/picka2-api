@@ -15,6 +15,9 @@ public class UserEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(nullable = false, length = 160)
+    private String lastname;
+
     @Column(nullable = false, length = 50, unique = true)
     private String username;
 
@@ -48,6 +51,14 @@ public class UserEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getLastname() {
+        return lastname;
+    }
+
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
     }
 
     public String getUsername() {

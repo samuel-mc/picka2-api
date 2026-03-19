@@ -13,6 +13,10 @@ public class RegisterUserRequestDTO {
     @NotEmpty(message = "El nombre es obligatorio")
     private String name;
 
+    @NotNull(message = "El apellido es obligatorio")
+    @NotEmpty(message = "El apellido es obligatorio")
+    private String lastname;
+
     @NotNull(message = "El username es obligatorio")
     @NotEmpty(message = "El username es obligatorio")
     private String username;

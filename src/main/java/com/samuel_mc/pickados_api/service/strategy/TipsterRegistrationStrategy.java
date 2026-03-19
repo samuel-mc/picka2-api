@@ -65,7 +65,7 @@ public class TipsterRegistrationStrategy implements UserRegistrationStrategy {
         // Se busca el rol base del sistema; si no existe, se crea en ese momento.
         RoleEntity role = roleRepository.findByName("TIPSTER").orElseGet(() -> {
             RoleEntity r = new RoleEntity();
-            r.setName("USER");
+            r.setName("TIPSTER");
             return roleRepository.save(r);
         });
         // Se asigna el rol recuperado o creado al nuevo usuario.
