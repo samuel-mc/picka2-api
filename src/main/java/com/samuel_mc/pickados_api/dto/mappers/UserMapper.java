@@ -21,4 +21,6 @@ public interface UserMapper {
 
     @Mapping(target = "user", ignore = true)
     TipsterProfileEntity registerTipsterRequestDTOtoTipsterProfileEntity(RegisterTipsterRequestDTO registerTipsterRequestDTO);
+
+    com.samuel_mc.pickados_api.dto.UserResponseDTO userEntityToUserResponseDTO(UserEntity userEntity);
 }

@@ -39,6 +39,12 @@ public class GlobalExceptionHandler {
         return responseUtils.generateErrorResponse(ex);
     }
 
+    @ExceptionHandler({org.springframework.web.servlet.resource.NoResourceFoundException.class, org.springframework.web.servlet.NoHandlerFoundException.class})
+    public ResponseEntity<GenericResponseDTO<String>> handleNotFoundException(Exception ex) {
+        GenericException notFoundEx = new GenericException(ResponseCode.NOT_FOUND.getCode(), ResponseCode.NOT_FOUND.getMessage());
+        return responseUtils.generateErrorResponse(notFoundEx);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<GenericResponseDTO<String>> handleUnexpected(Exception ex) {
         GenericException genericEx = new GenericException(ResponseCode.INTERNAL_ERROR.getCode(), ResponseCode.INTERNAL_ERROR.getMessage());

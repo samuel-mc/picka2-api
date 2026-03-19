@@ -27,15 +27,21 @@ public class UserEntity {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "created_at", nullable = false, columnDefinition = "timestamp default current_timestamp")
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "updated_at", nullable = false, columnDefinition = "timestamp default current_timestamp")
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @Column(name = "active", nullable = false, columnDefinition = "boolean default true")
+    private Boolean active;
+
+    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
+    private Boolean deleted;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private RoleEntity role;
-
-    @Column(name="created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(name="updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
 
     public long getId() {
         return id;
@@ -107,5 +113,21 @@ public class UserEntity {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
     }
 }

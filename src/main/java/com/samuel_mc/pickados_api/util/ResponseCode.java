@@ -12,6 +12,7 @@ public enum ResponseCode {
     BAD_REQUEST("BAD_REQUEST", "Petición inválida", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED("UNAUTHORIZED", "No autorizado", HttpStatus.UNAUTHORIZED),
     FORBIDDEN("FORBIDDEN", "Acceso denegado", HttpStatus.FORBIDDEN),
+    NOT_FOUND("NOT_FOUND", "Recurso no encontrado", HttpStatus.NOT_FOUND),
     USER_NOT_FOUND("USER_NOT_FOUND", "El usuario no existe", HttpStatus.NOT_FOUND),
     VALIDATION_ERROR("VALIDATION_ERROR", "Error de validación", HttpStatus.BAD_REQUEST),
 
