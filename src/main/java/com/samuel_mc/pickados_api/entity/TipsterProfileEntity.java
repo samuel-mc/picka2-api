@@ -17,6 +17,9 @@ public class TipsterProfileEntity {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Column(name = "validated", nullable = false, columnDefinition = "boolean default false")
+    private Boolean validated;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private UserEntity user;

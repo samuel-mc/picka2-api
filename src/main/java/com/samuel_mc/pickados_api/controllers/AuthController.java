@@ -6,6 +6,7 @@ import com.samuel_mc.pickados_api.dto.RegisterTipsterRequestDTO;
 import com.samuel_mc.pickados_api.dto.RegisterUserRequestDTO;
 import com.samuel_mc.pickados_api.entity.CustomUserDetails;
 import com.samuel_mc.pickados_api.service.facade.UserRegistrationFacade;
+import com.samuel_mc.pickados_api.service.EmailVerificationService;
 import com.samuel_mc.pickados_api.util.JwtUtil;
 import com.samuel_mc.pickados_api.util.ResponseUtils;
 import jakarta.validation.Valid;
@@ -24,6 +25,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,13 +43,15 @@ public class AuthController {
     private final UserRegistrationFacade userRegistrationFacade;
     private final JwtUtil jwtUtil;
     private final ResponseUtils responseUtils;
+    private final EmailVerificationService emailVerificationService;
 
     public AuthController(AuthenticationManager authenticationManager, UserRegistrationFacade userRegistrationFacade,
-            JwtUtil jwtUtil, ResponseUtils responseUtils) {
+            JwtUtil jwtUtil, ResponseUtils responseUtils, EmailVerificationService emailVerificationService) {
         this.authenticationManager = authenticationManager;
         this.userRegistrationFacade = userRegistrationFacade;
         this.jwtUtil = jwtUtil;
         this.responseUtils = responseUtils;
+        this.emailVerificationService = emailVerificationService;
     }
 
     @Operation(summary = "Iniciar sesión", description = "Autentica al usuario y devuelve un token JWT junto con sus datos básicos")
@@ -95,4 +100,18 @@ public class AuthController {
         return this.responseUtils.generateSuccessResponse(null);
     }
 
+    @Operation(summary = "Verificar correo electrónico", description = "Verifica el correo mediante un token JWT")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Correo verificado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = GenericResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Token inválido o expirado", content = @Content)
+    })
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
+        try {
+            emailVerificationService.verifyEmail(token);
+            return ResponseEntity.ok(Map.of("message", "Correo verificado exitosamente"));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
+    }
 }

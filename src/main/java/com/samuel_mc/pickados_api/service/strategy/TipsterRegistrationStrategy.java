@@ -13,6 +13,9 @@ import com.samuel_mc.pickados_api.service.EmailService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
+import com.samuel_mc.pickados_api.util.JwtUtil;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Estrategia de registro para usuarios de tipo Tipster.
@@ -32,14 +35,19 @@ public class TipsterRegistrationStrategy implements UserRegistrationStrategy {
     private final TipsterProfileRepository tipsterProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final JwtUtil jwtUtil;
+
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String frontendUrl;
 
     public TipsterRegistrationStrategy(UserRepository userRepository, RoleRepository roleRepository,
-            TipsterProfileRepository tipsterProfileRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
+            TipsterProfileRepository tipsterProfileRepository, PasswordEncoder passwordEncoder, EmailService emailService, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.tipsterProfileRepository = tipsterProfileRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.jwtUtil = jwtUtil;
     }
 
     /**
@@ -71,6 +79,9 @@ public class TipsterRegistrationStrategy implements UserRegistrationStrategy {
         // Se asigna el rol recuperado o creado al nuevo usuario.
         userEntity.setRole(role);
 
+        userEntity.setActive(true);
+        userEntity.setDeleted(false);
+
         // Primero se guarda el usuario para contar con su identificador persistido.
         userEntity = userRepository.save(userEntity);
 
@@ -79,16 +90,22 @@ public class TipsterRegistrationStrategy implements UserRegistrationStrategy {
         // Se vincula el perfil de tipster con el usuario recién creado.
         tipster.setUser(userEntity);
 
+        tipster.setValidated(false);
+
         // Se persiste el perfil del tipster en la base de datos.
         tipsterProfileRepository.save(tipster);
 
         // Se prepara el contenido del correo de bienvenida posterior al registro.
-//        String subject = "¡Bienvenido a Pickados!";
-//        String text = "<h1>Hola, " + tipsterReq.getName() + "</h1>" +
-//                "<p>Tu registro como Tipster ha sido exitoso.</p>" +
-//                "<p>¡Gracias por unirte a nosotros!</p>";
+        String token = jwtUtil.generateEmailVerificationToken(tipsterReq.getEmail());
+        String subject = "¡Bienvenido a Pickados!";
+        java.util.Map<String, String> context = new java.util.HashMap<>();
+        context.put("nombreUsuario", tipsterReq.getName());
+        context.put("confirmacionUrl", frontendUrl + "/auth/verify-email?token=" + token); 
+        context.put("tiempoExpiracion", "24 horas");
+        context.put("anio", String.valueOf(java.time.Year.now().getValue()));
+        
         // Se envía un correo HTML de confirmación al email proporcionado por el usuario.
-//        emailService.sendHtmlEmail(tipsterReq.getEmail(), subject, text);
+        emailService.sendEmailWithTemplate(tipsterReq.getEmail(), subject, "email-confirm.html", context);
     }
 
     /**

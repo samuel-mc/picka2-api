@@ -63,4 +63,19 @@ public class JwtUtil {
     public Claims getAllClaims(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
+
+    public String generateEmailVerificationToken(String email) {
+        // Token valid for 24 hours
+        long emailTokenExpirationMs = 24 * 60 * 60 * 1000L;
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + emailTokenExpirationMs))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String getEmailFromToken(String token) {
+        return getUsernameFromToken(token);
+    }
 }
