@@ -74,6 +74,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/request-password-reset").permitAll()
                         .requestMatchers("/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/users/admins").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/catalogs/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
