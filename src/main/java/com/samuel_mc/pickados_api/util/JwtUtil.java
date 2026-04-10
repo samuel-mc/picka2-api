@@ -20,6 +20,9 @@ import java.util.Map;
 @Component
 public class JwtUtil {
 
+    public static final String EMAIL_VERIFICATION_PURPOSE = "email_verification";
+    public static final String PASSWORD_RESET_PURPOSE = "password_reset";
+
     @Value("${jwt.secret}")
     private String secret;
 
@@ -65,17 +68,36 @@ public class JwtUtil {
     }
 
     public String generateEmailVerificationToken(String email) {
-        // Token valid for 24 hours
         long emailTokenExpirationMs = 24 * 60 * 60 * 1000L;
-        return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + emailTokenExpirationMs))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+        return generateScopedToken(email, EMAIL_VERIFICATION_PURPOSE, emailTokenExpirationMs);
+    }
+
+    public String generatePasswordResetToken(String email) {
+        long passwordResetExpirationMs = 60 * 60 * 1000L;
+        return generateScopedToken(email, PASSWORD_RESET_PURPOSE, passwordResetExpirationMs);
+    }
+
+    public boolean validateTokenForPurpose(String token, String expectedPurpose) {
+        try {
+            Claims claims = getAllClaims(token);
+            String purpose = claims.get("purpose", String.class);
+            return expectedPurpose.equals(purpose);
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     public String getEmailFromToken(String token) {
         return getUsernameFromToken(token);
+    }
+
+    private String generateScopedToken(String email, String purpose, long expirationTimeMs) {
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("purpose", purpose)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTimeMs))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
     }
 }

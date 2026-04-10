@@ -4,7 +4,10 @@ import com.samuel_mc.pickados_api.dto.AuthRequestDTO;
 import com.samuel_mc.pickados_api.dto.GenericResponseDTO;
 import com.samuel_mc.pickados_api.dto.RegisterTipsterRequestDTO;
 import com.samuel_mc.pickados_api.dto.RegisterUserRequestDTO;
+import com.samuel_mc.pickados_api.dto.RequestPasswordResetDTO;
+import com.samuel_mc.pickados_api.dto.ResetPasswordRequestDTO;
 import com.samuel_mc.pickados_api.entity.CustomUserDetails;
+import com.samuel_mc.pickados_api.service.PasswordResetService;
 import com.samuel_mc.pickados_api.service.facade.UserRegistrationFacade;
 import com.samuel_mc.pickados_api.service.EmailVerificationService;
 import com.samuel_mc.pickados_api.util.JwtUtil;
@@ -44,14 +47,17 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final ResponseUtils responseUtils;
     private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
 
     public AuthController(AuthenticationManager authenticationManager, UserRegistrationFacade userRegistrationFacade,
-            JwtUtil jwtUtil, ResponseUtils responseUtils, EmailVerificationService emailVerificationService) {
+            JwtUtil jwtUtil, ResponseUtils responseUtils, EmailVerificationService emailVerificationService,
+            PasswordResetService passwordResetService) {
         this.authenticationManager = authenticationManager;
         this.userRegistrationFacade = userRegistrationFacade;
         this.jwtUtil = jwtUtil;
         this.responseUtils = responseUtils;
         this.emailVerificationService = emailVerificationService;
+        this.passwordResetService = passwordResetService;
     }
 
     @Operation(summary = "Iniciar sesión", description = "Autentica al usuario y devuelve un token JWT junto con sus datos básicos")
@@ -68,6 +74,7 @@ public class AuthController {
             String token = jwtUtil.generateToken(userDetails);
             Map<String, Object> resp = new HashMap<>();
             resp.put("token", token);
+            resp.put("userId", userDetails.getId());
             resp.put("username", userDetails.getUsername());
             resp.put("role",
                     userDetails.getAuthorities().stream().findFirst().map(GrantedAuthority::getAuthority).orElse(""));
@@ -110,6 +117,34 @@ public class AuthController {
         try {
             emailVerificationService.verifyEmail(token);
             return ResponseEntity.ok(Map.of("message", "Correo verificado exitosamente"));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Solicitar actualización de contraseña", description = "Envía un correo con un enlace temporal para actualizar la contraseña")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Solicitud procesada correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = GenericResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content)
+    })
+    @PostMapping("/request-password-reset")
+    public ResponseEntity<GenericResponseDTO<String>> requestPasswordReset(
+            @RequestBody @Valid RequestPasswordResetDTO req) {
+        passwordResetService.requestPasswordReset(req.getEmail());
+        return responseUtils.generateSuccessResponse(
+                "Si el correo existe, recibirás instrucciones para actualizar tu contraseña");
+    }
+
+    @Operation(summary = "Actualizar contraseña", description = "Actualiza la contraseña usando un token temporal enviado por correo")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Contraseña actualizada correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = GenericResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Token inválido o datos incorrectos", content = @Content)
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody @Valid ResetPasswordRequestDTO req) {
+        try {
+            passwordResetService.resetPassword(req.getToken(), req.getNewPassword());
+            return responseUtils.generateSuccessResponse("Contraseña actualizada correctamente");
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }

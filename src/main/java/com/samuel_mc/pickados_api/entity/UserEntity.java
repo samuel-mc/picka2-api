@@ -43,6 +43,12 @@ public class UserEntity {
     @JoinColumn(name = "role_id")
     private RoleEntity role;
 
+    @Column(length = 2000)
+    private String bio;
+
+    @Column(name = "profile_photo_key", length = 512)
+    private String profilePhotoKey;
+
     public long getId() {
         return id;
     }
@@ -129,5 +135,21 @@ public class UserEntity {
 
     public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public String getProfilePhotoKey() {
+        return profilePhotoKey;
+    }
+
+    public void setProfilePhotoKey(String profilePhotoKey) {
+        this.profilePhotoKey = profilePhotoKey;
     }
 }

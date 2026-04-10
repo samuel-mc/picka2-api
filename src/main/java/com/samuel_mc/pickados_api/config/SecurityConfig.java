@@ -71,6 +71,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/register-user").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/auth/register-tipster").permitAll()
                         .requestMatchers("/auth/verify-email").permitAll()
+                        .requestMatchers("/auth/request-password-reset").permitAll()
+                        .requestMatchers("/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/users/admins").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
