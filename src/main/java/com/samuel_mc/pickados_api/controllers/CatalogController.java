@@ -206,4 +206,35 @@ public class CatalogController {
         catalogService.deleteTeam(id);
         return responseUtils.generateSuccessResponse("Equipo eliminado correctamente");
     }
+
+    @GetMapping("/home-prashes")
+    public ResponseEntity<GenericResponseDTO<List<CatalogItemResponseDTO>>> getHomePrashes() {
+        return responseUtils.generateSuccessResponse(catalogService.getHomePrashes());
+    }
+
+    @GetMapping("/generate-home-prashe")
+    public ResponseEntity<GenericResponseDTO<CatalogItemResponseDTO>> generateHomePrashe() {
+        return responseUtils.generateSuccessResponse(catalogService.generateHomePrashe());
+    }
+
+    @PostMapping("/home-prashes")
+    public ResponseEntity<GenericResponseDTO<CatalogItemResponseDTO>> createHomePrashe(
+            @RequestBody @Valid CatalogItemRequestDTO request
+    ) {
+        return responseUtils.generateSuccessResponse(catalogService.createHomePrashe(request));
+    }
+
+    @PutMapping("/home-prashes/{id}")
+    public ResponseEntity<GenericResponseDTO<CatalogItemResponseDTO>> updateHomePrashe(
+            @PathVariable Long id,
+            @RequestBody @Valid CatalogItemRequestDTO request
+    ) {
+        return responseUtils.generateSuccessResponse(catalogService.updateHomePrashe(id, request));
+    }
+
+    @DeleteMapping("/home-prashes/{id}")
+    public ResponseEntity<GenericResponseDTO<String>> deleteHomePrashe(@PathVariable Long id) {
+        catalogService.deleteHomePrashe(id);
+        return responseUtils.generateSuccessResponse("Home prashe eliminado correctamente");
+    }
 }

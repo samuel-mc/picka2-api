@@ -39,4 +39,10 @@ public interface CatalogService {
     PresignCatalogLogoResponseDTO presignTeamLogo(Long id, String contentType);
     TeamResponseDTO completeTeamLogo(Long id, CompleteCatalogLogoRequestDTO request);
     void deleteTeam(Long id);
+
+    List<CatalogItemResponseDTO> getHomePrashes();
+    CatalogItemResponseDTO generateHomePrashe();
+    CatalogItemResponseDTO createHomePrashe(CatalogItemRequestDTO request);
+    CatalogItemResponseDTO updateHomePrashe(Long id, CatalogItemRequestDTO request);
+    void deleteHomePrashe(Long id);
 }

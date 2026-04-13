@@ -3,9 +3,12 @@ package com.samuel_mc.pickados_api.util;
 import com.samuel_mc.pickados_api.dto.GenericResponseDTO;
 import com.samuel_mc.pickados_api.exception.GenericException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -37,6 +40,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(GenericException.class)
     public ResponseEntity<GenericResponseDTO<String>> handleGenericException(GenericException ex) {
         return responseUtils.generateErrorResponse(ex);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<GenericResponseDTO<String>> handleResponseStatusException(ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(GenericResponseDTO.<String>builder()
+                        .success(false)
+                        .code(String.valueOf(ex.getStatusCode().value()))
+                        .message(ex.getReason())
+                        .data(null)
+                        .timestamp(LocalDateTime.now())
+                        .build());
     }
 
     @ExceptionHandler({org.springframework.web.servlet.resource.NoResourceFoundException.class, org.springframework.web.servlet.NoHandlerFoundException.class})

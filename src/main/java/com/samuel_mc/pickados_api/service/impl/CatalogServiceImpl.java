@@ -10,11 +10,13 @@ import com.samuel_mc.pickados_api.dto.catalog.TeamRequestDTO;
 import com.samuel_mc.pickados_api.dto.catalog.TeamResponseDTO;
 import com.samuel_mc.pickados_api.entity.CompetitionEntity;
 import com.samuel_mc.pickados_api.entity.CountryEntity;
+import com.samuel_mc.pickados_api.entity.HomePrasheEntity;
 import com.samuel_mc.pickados_api.entity.SportEntity;
 import com.samuel_mc.pickados_api.entity.TeamEntity;
 import com.samuel_mc.pickados_api.exception.GenericException;
 import com.samuel_mc.pickados_api.repository.CompetitionRepository;
 import com.samuel_mc.pickados_api.repository.CountryRepository;
+import com.samuel_mc.pickados_api.repository.HomePrasheRepository;
 import com.samuel_mc.pickados_api.repository.SportRepository;
 import com.samuel_mc.pickados_api.repository.TeamRepository;
 import com.samuel_mc.pickados_api.service.CatalogLogoStorageService;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Random;
 
 @Service
 @Transactional
@@ -33,6 +36,7 @@ public class CatalogServiceImpl implements CatalogService {
     private final CountryRepository countryRepository;
     private final CompetitionRepository competitionRepository;
     private final TeamRepository teamRepository;
+    private final HomePrasheRepository homePrasheRepository;
     private final CatalogLogoStorageService catalogLogoStorageService;
 
     public CatalogServiceImpl(
@@ -40,12 +44,14 @@ public class CatalogServiceImpl implements CatalogService {
             CountryRepository countryRepository,
             CompetitionRepository competitionRepository,
             TeamRepository teamRepository,
+            HomePrasheRepository homePrasheRepository,
             CatalogLogoStorageService catalogLogoStorageService
     ) {
         this.sportRepository = sportRepository;
         this.countryRepository = countryRepository;
         this.competitionRepository = competitionRepository;
         this.teamRepository = teamRepository;
+        this.homePrasheRepository = homePrasheRepository;
         this.catalogLogoStorageService = catalogLogoStorageService;
     }
 
@@ -317,6 +323,62 @@ public class CatalogServiceImpl implements CatalogService {
         teamRepository.delete(entity);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<CatalogItemResponseDTO> getHomePrashes() {
+        return homePrasheRepository.findAll().stream()
+                .map(this::mapHomePrashe)
+                .toList();
+    }
+
+    @Override
+    public CatalogItemResponseDTO generateHomePrashe() {
+        List<HomePrasheEntity> homePrasheRepositories = homePrasheRepository.findAll();
+        if (homePrasheRepositories.isEmpty()) {
+            throw new GenericException(ResponseCode.NOT_FOUND.getCode(), "No hay home prashes disponibles");
+        }
+        Random random = new Random();
+        int randomIndex = random.nextInt(homePrasheRepositories.size());
+        HomePrasheEntity randomHomePrashe = homePrasheRepositories.get(randomIndex);
+        return mapHomePrashe(randomHomePrashe);
+
+    }
+
+    @Override
+    public CatalogItemResponseDTO createHomePrashe(CatalogItemRequestDTO request) {
+        String normalizedName = normalizeName(request.getName());
+        homePrasheRepository.findByNameIgnoreCase(normalizedName)
+                .ifPresent(existing -> {
+                    throw new GenericException(ResponseCode.BAD_REQUEST.getCode(), "Ya existe un home prashe con ese texto");
+                });
+
+        HomePrasheEntity entity = new HomePrasheEntity();
+        entity.setName(normalizedName);
+        entity.setActive(resolveActive(request.getActive()));
+        return mapHomePrashe(homePrasheRepository.save(entity));
+    }
+
+    @Override
+    public CatalogItemResponseDTO updateHomePrashe(Long id, CatalogItemRequestDTO request) {
+        HomePrasheEntity entity = getHomePrashe(id);
+        String normalizedName = normalizeName(request.getName());
+        homePrasheRepository.findByNameIgnoreCase(normalizedName)
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new GenericException(ResponseCode.BAD_REQUEST.getCode(), "Ya existe un home prashe con ese texto");
+                });
+
+        entity.setName(normalizedName);
+        entity.setActive(resolveActive(request.getActive()));
+        return mapHomePrashe(homePrasheRepository.save(entity));
+    }
+
+    @Override
+    public void deleteHomePrashe(Long id) {
+        HomePrasheEntity entity = getHomePrashe(id);
+        homePrasheRepository.delete(entity);
+    }
+
     private CatalogItemResponseDTO mapSport(SportEntity entity) {
         return CatalogItemResponseDTO.builder()
                 .id(entity.getId())
@@ -364,6 +426,15 @@ public class CatalogServiceImpl implements CatalogService {
                 .build();
     }
 
+    private CatalogItemResponseDTO mapHomePrashe(HomePrasheEntity entity) {
+        return CatalogItemResponseDTO.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .active(entity.getActive())
+                .logoUrl(null)
+                .build();
+    }
+
     private SportEntity getSport(Long id) {
         return sportRepository.findById(id)
                 .orElseThrow(() -> new GenericException(ResponseCode.NOT_FOUND.getCode(), "Deporte no encontrado"));
@@ -382,6 +453,11 @@ public class CatalogServiceImpl implements CatalogService {
     private TeamEntity getTeam(Long id) {
         return teamRepository.findById(id)
                 .orElseThrow(() -> new GenericException(ResponseCode.NOT_FOUND.getCode(), "Equipo no encontrado"));
+    }
+
+    private HomePrasheEntity getHomePrashe(Long id) {
+        return homePrasheRepository.findById(id)
+                .orElseThrow(() -> new GenericException(ResponseCode.NOT_FOUND.getCode(), "Home prashe no encontrado"));
     }
 
     private String normalizeName(String value) {

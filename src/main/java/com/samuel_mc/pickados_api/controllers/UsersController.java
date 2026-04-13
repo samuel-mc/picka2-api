@@ -20,7 +20,11 @@ import com.samuel_mc.pickados_api.repository.UserRepository;
 import com.samuel_mc.pickados_api.dto.mappers.UserMapper;
 import com.samuel_mc.pickados_api.dto.UserResponseDTO;
 import com.samuel_mc.pickados_api.dto.UpdateUserRequestDTO;
+import com.samuel_mc.pickados_api.dto.user.PublicProfileResponseDTO;
+import com.samuel_mc.pickados_api.entity.CustomUserDetails;
 import com.samuel_mc.pickados_api.entity.UserEntity;
+import com.samuel_mc.pickados_api.service.UserProfileService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @RestController
 @RequestMapping("/users")
@@ -30,11 +34,22 @@ public class UsersController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserProfileService userProfileService;
+
     @GetMapping("/admins")
     public List<UserResponseDTO> getAdmins() {
         return userRepository.findByRole_NameAndDeletedFalse("ADMIN").stream()
                 .map(UserMapper.INSTANCIA::userEntityToUserResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/{id}/profile")
+    public ResponseEntity<PublicProfileResponseDTO> getPublicProfile(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(userProfileService.getPublicProfile(principal.getId(), id));
     }
 
     @PutMapping("/{id}")

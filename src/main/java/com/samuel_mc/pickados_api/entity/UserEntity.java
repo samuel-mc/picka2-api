@@ -3,6 +3,8 @@ package com.samuel_mc.pickados_api.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -48,6 +50,22 @@ public class UserEntity {
 
     @Column(name = "profile_photo_key", length = 512)
     private String profilePhotoKey;
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_preferred_competitions",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "competition_id")
+    )
+    private Set<CompetitionEntity> preferredCompetitions = new LinkedHashSet<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_preferred_teams",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "team_id")
+    )
+    private Set<TeamEntity> preferredTeams = new LinkedHashSet<>();
 
     public long getId() {
         return id;
@@ -151,5 +169,21 @@ public class UserEntity {
 
     public void setProfilePhotoKey(String profilePhotoKey) {
         this.profilePhotoKey = profilePhotoKey;
+    }
+
+    public Set<CompetitionEntity> getPreferredCompetitions() {
+        return preferredCompetitions;
+    }
+
+    public void setPreferredCompetitions(Set<CompetitionEntity> preferredCompetitions) {
+        this.preferredCompetitions = preferredCompetitions;
+    }
+
+    public Set<TeamEntity> getPreferredTeams() {
+        return preferredTeams;
+    }
+
+    public void setPreferredTeams(Set<TeamEntity> preferredTeams) {
+        this.preferredTeams = preferredTeams;
     }
 }

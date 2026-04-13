@@ -74,7 +74,12 @@ public class SecurityConfig {
                         .requestMatchers("/auth/request-password-reset").permitAll()
                         .requestMatchers("/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/users/admins").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/catalogs/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET,"/catalogs/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/catalogs/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT,"/catalogs/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,"/catalogs/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET,"/sportsbooks").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/posts/**").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
