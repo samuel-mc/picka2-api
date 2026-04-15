@@ -9,11 +9,21 @@ public class CommentRequestDTO {
     @Size(max = 1500, message = "El comentario no puede exceder 1500 caracteres")
     private String content;
 
+    private Long parentCommentId;
+
     public String getContent() {
         return content;
     }
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public Long getParentCommentId() {
+        return parentCommentId;
+    }
+
+    public void setParentCommentId(Long parentCommentId) {
+        this.parentCommentId = parentCommentId;
     }
 }

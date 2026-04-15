@@ -67,6 +67,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -80,6 +81,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 public class PostService {
 
     private static final String ROLE_TIPSTER = "TIPSTER";
+    private static final int MAX_COMMENT_REPLY_DEPTH = 2;
 
     private final PostRepository postRepository;
     private final PostPickRepository postPickRepository;
@@ -216,10 +218,20 @@ public class PostService {
     public CommentResponseDTO addComment(Long currentUserId, Long postId, CommentRequestDTO request) {
         PostEntity post = getVisiblePost(postId, currentUserId);
         UserEntity author = getUser(currentUserId);
+        CommentEntity parentComment = null;
+
+        if (request.getParentCommentId() != null) {
+            parentComment = commentRepository.findByIdAndPostId(request.getParentCommentId(), postId)
+                    .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "El comentario padre no existe en este post"));
+            if (getCommentDepth(parentComment) >= MAX_COMMENT_REPLY_DEPTH) {
+                throw new ResponseStatusException(BAD_REQUEST, "Solo se permiten respuestas hasta 2 niveles de profundidad");
+            }
+        }
 
         CommentEntity entity = new CommentEntity();
         entity.setPost(post);
         entity.setAuthor(author);
+        entity.setParentComment(parentComment);
         entity.setContent(request.getContent().trim());
         return mapComment(commentRepository.save(entity), currentUserId);
     }
@@ -227,9 +239,7 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<CommentResponseDTO> getComments(Long currentUserId, Long postId) {
         getVisiblePost(postId, currentUserId);
-        return commentRepository.findByPostIdOrderByCreatedAtAsc(postId).stream()
-                .map(comment -> mapComment(comment, currentUserId))
-                .toList();
+        return buildCommentTree(commentRepository.findByPostIdOrderByCreatedAtAsc(postId), currentUserId);
     }
 
     @Transactional
@@ -652,12 +662,50 @@ public class PostService {
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
         dto.setAuthor(mapAuthor(entity.getAuthor()));
+        dto.setParentCommentId(entity.getParentComment() != null ? entity.getParentComment().getId() : null);
+        dto.setReplyingToUsername(entity.getParentComment() != null ? entity.getParentComment().getAuthor().getUsername() : null);
         dto.setLikesCount(commentLikeRepository.countByCommentId(entity.getId()));
         dto.setLikedByCurrentUser(
                 currentUserId != null
                         && commentLikeRepository.findByCommentIdAndUserId(entity.getId(), currentUserId).isPresent()
         );
         return dto;
+    }
+
+    private int getCommentDepth(CommentEntity comment) {
+        int depth = 0;
+        CommentEntity current = comment;
+        while (current.getParentComment() != null) {
+            depth++;
+            current = current.getParentComment();
+        }
+        return depth;
+    }
+
+    private List<CommentResponseDTO> buildCommentTree(List<CommentEntity> entities, Long currentUserId) {
+        Map<Long, CommentResponseDTO> mappedById = new HashMap<>();
+        List<CommentResponseDTO> roots = new ArrayList<>();
+
+        for (CommentEntity entity : entities) {
+            mappedById.put(entity.getId(), mapComment(entity, currentUserId));
+        }
+
+        for (CommentEntity entity : entities) {
+            CommentResponseDTO dto = mappedById.get(entity.getId());
+            if (entity.getParentComment() == null) {
+                roots.add(dto);
+                continue;
+            }
+
+            CommentResponseDTO parent = mappedById.get(entity.getParentComment().getId());
+            if (parent == null) {
+                roots.add(dto);
+                continue;
+            }
+            parent.getReplies().add(dto);
+        }
+
+        return roots;
     }
 
     private PostAuthorResponseDTO mapAuthor(UserEntity user) {

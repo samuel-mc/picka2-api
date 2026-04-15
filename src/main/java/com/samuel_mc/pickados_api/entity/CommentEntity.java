@@ -26,6 +26,10 @@ public class CommentEntity extends AuditableEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity author;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private CommentEntity parentComment;
+
     @Column(nullable = false, length = 1500)
     private String content;
 
@@ -51,6 +55,14 @@ public class CommentEntity extends AuditableEntity {
 
     public void setAuthor(UserEntity author) {
         this.author = author;
+    }
+
+    public CommentEntity getParentComment() {
+        return parentComment;
+    }
+
+    public void setParentComment(CommentEntity parentComment) {
+        this.parentComment = parentComment;
     }
 
     public String getContent() {
