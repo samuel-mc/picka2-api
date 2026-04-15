@@ -88,6 +88,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/analytics/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/roles/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/users").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/users/admins").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/users/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/users/**").hasAuthority("ROLE_ADMIN")
