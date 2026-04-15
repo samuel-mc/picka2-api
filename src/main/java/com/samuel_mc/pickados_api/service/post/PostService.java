@@ -57,7 +57,9 @@ import com.samuel_mc.pickados_api.repository.post.ReactionRepository;
 import com.samuel_mc.pickados_api.repository.post.SavedPostRepository;
 import com.samuel_mc.pickados_api.repository.post.SportsbookRepository;
 import com.samuel_mc.pickados_api.repository.projection.PostTimelineProjection;
+import com.samuel_mc.pickados_api.service.notification.NotificationService;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -101,6 +103,7 @@ public class PostService {
     private final SportsbookService sportsbookService;
     private final PostMediaStorageService postMediaStorageService;
     private final R2Properties r2Properties;
+    private final NotificationService notificationService;
 
     public PostService(
             PostRepository postRepository,
@@ -120,7 +123,8 @@ public class PostService {
             CompetitionRepository competitionRepository,
             SportsbookService sportsbookService,
             PostMediaStorageService postMediaStorageService,
-            R2Properties r2Properties
+            R2Properties r2Properties,
+            NotificationService notificationService
     ) {
         this.postRepository = postRepository;
         this.postPickRepository = postPickRepository;
@@ -140,6 +144,7 @@ public class PostService {
         this.sportsbookService = sportsbookService;
         this.postMediaStorageService = postMediaStorageService;
         this.r2Properties = r2Properties;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -233,7 +238,9 @@ public class PostService {
         entity.setAuthor(author);
         entity.setParentComment(parentComment);
         entity.setContent(request.getContent().trim());
-        return mapComment(commentRepository.save(entity), currentUserId);
+        CommentEntity savedComment = commentRepository.save(entity);
+        notificationService.notifyPostComment(author, post, savedComment);
+        return mapComment(savedComment, currentUserId);
     }
 
     @Transactional(readOnly = true)
@@ -248,14 +255,16 @@ public class PostService {
         CommentEntity comment = commentRepository.findByIdAndPostId(commentId, postId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Comentario no encontrado"));
 
+        UserEntity currentUser = getUser(currentUserId);
         commentLikeRepository.findByCommentIdAndUserId(commentId, currentUserId)
                 .ifPresentOrElse(
                         commentLikeRepository::delete,
                         () -> {
                             CommentLikeEntity like = new CommentLikeEntity();
                             like.setComment(comment);
-                            like.setUser(getUser(currentUserId));
+                            like.setUser(currentUser);
                             commentLikeRepository.save(like);
+                            notificationService.notifyCommentLike(currentUser, comment);
                         }
                 );
 
@@ -270,13 +279,19 @@ public class PostService {
         if (existing != null && existing.getType() == request.getType()) {
             reactionRepository.delete(existing);
         } else {
+            UserEntity currentUser = existing != null ? existing.getUser() : getUser(currentUserId);
+            boolean shouldNotifyLike = request.getType() == ReactionType.LIKE
+                    && (existing == null || existing.getType() != ReactionType.LIKE);
             if (existing == null) {
                 existing = new ReactionEntity();
                 existing.setPost(post);
-                existing.setUser(getUser(currentUserId));
+                existing.setUser(currentUser);
             }
             existing.setType(request.getType());
             reactionRepository.save(existing);
+            if (shouldNotifyLike) {
+                notificationService.notifyPostLike(currentUser, post);
+            }
         }
         return buildMetrics(postId, currentUserId);
     }
@@ -301,14 +316,31 @@ public class PostService {
     @Transactional
     public void registerView(Long currentUserId, Long postId) {
         PostEntity post = getVisiblePost(postId, currentUserId);
-        PostViewEntity view = postViewRepository.findByPostIdAndUserId(postId, currentUserId).orElseGet(() -> {
-            PostViewEntity entity = new PostViewEntity();
-            entity.setPost(post);
-            entity.setUser(getUser(currentUserId));
-            return entity;
-        });
-        view.setViewedAt(LocalDateTime.now());
-        postViewRepository.save(view);
+        if (post.getAuthor().getId() == currentUserId) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        PostViewEntity existingView = postViewRepository.findByPostIdAndUserId(postId, currentUserId).orElse(null);
+        if (existingView != null) {
+            existingView.setViewedAt(now);
+            postViewRepository.save(existingView);
+            return;
+        }
+
+        PostViewEntity newView = new PostViewEntity();
+        newView.setPost(post);
+        newView.setUser(getUser(currentUserId));
+        newView.setViewedAt(now);
+
+        try {
+            postViewRepository.saveAndFlush(newView);
+        } catch (DataIntegrityViolationException ex) {
+            postViewRepository.findByPostIdAndUserId(postId, currentUserId).ifPresent(view -> {
+                view.setViewedAt(now);
+                postViewRepository.save(view);
+            });
+        }
     }
 
     @Transactional
@@ -351,6 +383,7 @@ public class PostService {
                     follow.setFollower(follower);
                     follow.setFollowed(followed);
                     followRepository.save(follow);
+                    notificationService.notifyFollowStarted(follower, followed);
                     return new ToggleStateResponseDTO(true);
                 });
     }
