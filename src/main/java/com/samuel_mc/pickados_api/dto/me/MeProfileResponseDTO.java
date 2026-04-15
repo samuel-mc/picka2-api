@@ -11,6 +11,7 @@ public class MeProfileResponseDTO {
     private long id;
     private String name;
     private String lastname;
+    private String username;
     private String email;
     private String bio;
     private String avatarUrl;

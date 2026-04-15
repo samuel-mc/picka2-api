@@ -42,7 +42,7 @@ public class MeProfileController {
     @PutMapping
     public MeProfileResponseDTO update(
             @AuthenticationPrincipal CustomUserDetails principal,
-            @RequestBody UpdateMeProfileRequestDTO body) {
+            @RequestBody @Valid UpdateMeProfileRequestDTO body) {
         return meProfileService.updateProfile(principal.getId(), body);
     }
 

@@ -1,16 +1,16 @@
 package com.samuel_mc.pickados_api.dto;
 
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 
 public class AuthRequestDTO {
-    @NotNull
-    @NotEmpty
+    @NotBlank(message = "El usuario es obligatorio")
+    @Size(max = 150, message = "El usuario no puede exceder 150 caracteres")
     private String username;
 
-    @NotNull
-    @NotEmpty
+    @NotBlank(message = "La contraseña es obligatoria")
+    @Size(max = 72, message = "La contraseña no puede exceder 72 caracteres")
     private String password;
 
     public String getUsername() {
@@ -29,4 +29,3 @@ public class AuthRequestDTO {
         this.password = password;
     }
 }
-

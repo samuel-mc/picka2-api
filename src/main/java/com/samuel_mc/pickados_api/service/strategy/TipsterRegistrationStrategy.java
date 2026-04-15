@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Se encarga de:
  * 1. Mapear el request a la entidad de usuario.
  * 2. Encriptar la contraseña antes de persistir.
- * 3. Asignar el rol base "USER".
+ * 3. Asignar el rol "TIPSTER".
  * 4. Crear el perfil específico de tipster.
  * 5. Enviar un correo de bienvenida al finalizar el registro.
  */

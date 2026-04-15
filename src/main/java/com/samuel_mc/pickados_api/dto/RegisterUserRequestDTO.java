@@ -1,7 +1,10 @@
 package com.samuel_mc.pickados_api.dto;
 
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import com.samuel_mc.pickados_api.util.ValidationPatterns;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,24 +12,29 @@ import lombok.Setter;
 @Getter
 public class RegisterUserRequestDTO {
 
-    @NotNull(message = "El nombre es obligatorio")
-    @NotEmpty(message = "El nombre es obligatorio")
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 100, message = "El nombre no puede exceder 100 caracteres")
     private String name;
 
-    @NotNull(message = "El apellido es obligatorio")
-    @NotEmpty(message = "El apellido es obligatorio")
+    @NotBlank(message = "El apellido es obligatorio")
+    @Size(max = 160, message = "El apellido no puede exceder 160 caracteres")
     private String lastname;
 
-    @NotNull(message = "El username es obligatorio")
-    @NotEmpty(message = "El username es obligatorio")
+    @NotBlank(message = "El username es obligatorio")
+    @Size(max = 50, message = "El username no puede exceder 50 caracteres")
     private String username;
 
-    @NotNull(message = "El email es obligatorio")
-    @NotEmpty(message = "El email es obligatorio")
+    @NotBlank(message = "El email es obligatorio")
+    @Email(message = "El email no es válido")
+    @Size(max = 150, message = "El email no puede exceder 150 caracteres")
     private String email;
 
-    @NotNull(message = "El password es obligatorio")
-    @NotEmpty(message = "El password es obligatorio")
+    @NotBlank(message = "El password es obligatorio")
+    @Size(min = 8, max = 72, message = "La contraseña debe tener entre 8 y 72 caracteres")
+    @Pattern(
+            regexp = ValidationPatterns.STRONG_PASSWORD,
+            message = "La contraseña debe incluir mayúsculas, minúsculas y números"
+    )
     private String password;
 
 }

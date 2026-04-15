@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface TipsterProfileRepository extends JpaRepository<TipsterProfileEntity, Long> {
     Optional<TipsterProfileEntity> findByUser(UserEntity user);
+
+    long countByValidatedTrue();
 }

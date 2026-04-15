@@ -1,5 +1,6 @@
 package com.samuel_mc.pickados_api.service.strategy;
 
+import com.samuel_mc.pickados_api.dto.RegisterAdminRequestDTO;
 import com.samuel_mc.pickados_api.dto.RegisterUserRequestDTO;
 import com.samuel_mc.pickados_api.dto.mappers.UserMapper;
 import com.samuel_mc.pickados_api.entity.RoleEntity;
@@ -10,7 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StandardUserRegistrationStrategy implements UserRegistrationStrategy {
+public class AdminRegistrationStrategy implements UserRegistrationStrategy {
 
     private static final String ROLE_ADMIN = "ADMIN";
 
@@ -18,8 +19,11 @@ public class StandardUserRegistrationStrategy implements UserRegistrationStrateg
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public StandardUserRegistrationStrategy(UserRepository userRepository, RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder) {
+    public AdminRegistrationStrategy(
+            UserRepository userRepository,
+            RoleRepository roleRepository,
+            PasswordEncoder passwordEncoder
+    ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -27,8 +31,9 @@ public class StandardUserRegistrationStrategy implements UserRegistrationStrateg
 
     @Override
     public void register(RegisterUserRequestDTO req) {
-        UserEntity userEntity = UserMapper.INSTANCIA.registerUserRequestDTOToUserEntity(req);
-        userEntity.setPassword(passwordEncoder.encode(req.getPassword()));
+        RegisterAdminRequestDTO adminReq = (RegisterAdminRequestDTO) req;
+        UserEntity userEntity = UserMapper.INSTANCIA.registerUserRequestDTOToUserEntity(adminReq);
+        userEntity.setPassword(passwordEncoder.encode(adminReq.getPassword()));
         userEntity.setActive(true);
         userEntity.setDeleted(false);
 
@@ -44,6 +49,6 @@ public class StandardUserRegistrationStrategy implements UserRegistrationStrateg
 
     @Override
     public boolean supports(Class<? extends RegisterUserRequestDTO> requestClass) {
-        return RegisterUserRequestDTO.class.equals(requestClass);
+        return RegisterAdminRequestDTO.class.equals(requestClass);
     }
 }

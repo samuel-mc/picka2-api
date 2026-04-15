@@ -95,12 +95,26 @@ public class PostsController {
         return responseUtils.generateSuccessResponse(postService.getFeed(requireUserId(principal), page, size));
     }
 
+    @GetMapping("/saved")
+    public ResponseEntity<GenericResponseDTO<PagedResponseDTO<PostResponseDTO>>> getSavedPosts(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return responseUtils.generateSuccessResponse(postService.getSavedPosts(requireUserId(principal), page, size));
+    }
+
     @GetMapping("/{postId}")
     public ResponseEntity<GenericResponseDTO<PostResponseDTO>> getDetail(
             @AuthenticationPrincipal CustomUserDetails principal,
             @PathVariable Long postId
     ) {
         return responseUtils.generateSuccessResponse(postService.getPostDetail(requireUserId(principal), postId));
+    }
+
+    @GetMapping("/public/{postId}")
+    public ResponseEntity<GenericResponseDTO<PostResponseDTO>> getPublicDetail(@PathVariable Long postId) {
+        return responseUtils.generateSuccessResponse(postService.getPublicPostDetail(postId));
     }
 
     @PostMapping("/{postId}/comments")
@@ -118,6 +132,17 @@ public class PostsController {
             @PathVariable Long postId
     ) {
         return responseUtils.generateSuccessResponse(postService.getComments(requireUserId(principal), postId));
+    }
+
+    @PutMapping("/{postId}/comments/{commentId}/like")
+    public ResponseEntity<GenericResponseDTO<CommentResponseDTO>> toggleCommentLike(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable Long postId,
+            @PathVariable Long commentId
+    ) {
+        return responseUtils.generateSuccessResponse(
+                postService.toggleCommentLike(requireUserId(principal), postId, commentId)
+        );
     }
 
     @PutMapping("/{postId}/reaction")

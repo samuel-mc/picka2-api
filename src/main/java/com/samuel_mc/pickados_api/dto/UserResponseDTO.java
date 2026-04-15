@@ -10,6 +10,8 @@ public class UserResponseDTO {
     private String lastname;
     private String username;
     private String email;
+    private String role;
+    private Boolean validatedTipster;
     private LocalDateTime createdAt;
     private Boolean active;
 }

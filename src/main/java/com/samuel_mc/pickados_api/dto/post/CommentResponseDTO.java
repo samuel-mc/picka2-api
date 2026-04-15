@@ -8,6 +8,8 @@ public class CommentResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private PostAuthorResponseDTO author;
+    private long likesCount;
+    private boolean likedByCurrentUser;
 
     public Long getId() {
         return id;
@@ -47,5 +49,21 @@ public class CommentResponseDTO {
 
     public void setAuthor(PostAuthorResponseDTO author) {
         this.author = author;
+    }
+
+    public long getLikesCount() {
+        return likesCount;
+    }
+
+    public void setLikesCount(long likesCount) {
+        this.likesCount = likesCount;
+    }
+
+    public boolean isLikedByCurrentUser() {
+        return likedByCurrentUser;
+    }
+
+    public void setLikedByCurrentUser(boolean likedByCurrentUser) {
+        this.likedByCurrentUser = likedByCurrentUser;
     }
 }

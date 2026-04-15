@@ -33,7 +33,18 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("jwt.secret debe configurarse mediante JWT_SECRET y ser Base64 válido de al menos 32 bytes.");
+        }
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secret);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalStateException("jwt.secret debe estar codificado en Base64.", ex);
+        }
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("jwt.secret debe tener al menos 32 bytes una vez decodificado.");
+        }
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 

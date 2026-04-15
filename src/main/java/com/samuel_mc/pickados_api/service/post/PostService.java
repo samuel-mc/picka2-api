@@ -20,6 +20,7 @@ import com.samuel_mc.pickados_api.dto.post.ToggleStateResponseDTO;
 import com.samuel_mc.pickados_api.dto.post.UpdatePickResultRequestDTO;
 import com.samuel_mc.pickados_api.entity.CompetitionEntity;
 import com.samuel_mc.pickados_api.entity.CommentEntity;
+import com.samuel_mc.pickados_api.entity.CommentLikeEntity;
 import com.samuel_mc.pickados_api.entity.FollowEntity;
 import com.samuel_mc.pickados_api.entity.PostEntity;
 import com.samuel_mc.pickados_api.entity.PostMediaEntity;
@@ -45,6 +46,7 @@ import com.samuel_mc.pickados_api.repository.CompetitionRepository;
 import com.samuel_mc.pickados_api.repository.SportRepository;
 import com.samuel_mc.pickados_api.repository.UserRepository;
 import com.samuel_mc.pickados_api.repository.post.CommentRepository;
+import com.samuel_mc.pickados_api.repository.post.CommentLikeRepository;
 import com.samuel_mc.pickados_api.repository.post.FollowRepository;
 import com.samuel_mc.pickados_api.repository.post.PostPickRepository;
 import com.samuel_mc.pickados_api.repository.post.PostRepository;
@@ -54,8 +56,10 @@ import com.samuel_mc.pickados_api.repository.post.PostViewRepository;
 import com.samuel_mc.pickados_api.repository.post.ReactionRepository;
 import com.samuel_mc.pickados_api.repository.post.SavedPostRepository;
 import com.samuel_mc.pickados_api.repository.post.SportsbookRepository;
+import com.samuel_mc.pickados_api.repository.projection.PostTimelineProjection;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -63,8 +67,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -73,9 +79,12 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @Service
 public class PostService {
 
+    private static final String ROLE_TIPSTER = "TIPSTER";
+
     private final PostRepository postRepository;
     private final PostPickRepository postPickRepository;
     private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
     private final ReactionRepository reactionRepository;
     private final SavedPostRepository savedPostRepository;
     private final PostViewRepository postViewRepository;
@@ -95,6 +104,7 @@ public class PostService {
             PostRepository postRepository,
             PostPickRepository postPickRepository,
             CommentRepository commentRepository,
+            CommentLikeRepository commentLikeRepository,
             ReactionRepository reactionRepository,
             SavedPostRepository savedPostRepository,
             PostViewRepository postViewRepository,
@@ -113,6 +123,7 @@ public class PostService {
         this.postRepository = postRepository;
         this.postPickRepository = postPickRepository;
         this.commentRepository = commentRepository;
+        this.commentLikeRepository = commentLikeRepository;
         this.reactionRepository = reactionRepository;
         this.savedPostRepository = savedPostRepository;
         this.postViewRepository = postViewRepository;
@@ -132,6 +143,7 @@ public class PostService {
     @Transactional
     public PostResponseDTO createPost(Long currentUserId, CreatePostRequestDTO request) {
         UserEntity author = getUser(currentUserId);
+        ensureTipster(author);
         validatePostRequest(request);
 
         PostEntity post = new PostEntity();
@@ -173,8 +185,7 @@ public class PostService {
     @Transactional(readOnly = true)
     public PagedResponseDTO<PostResponseDTO> getFeed(Long currentUserId, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
-        Page<PostEntity> feed = postRepository.findFeed(currentUserId, pageable);
-        return mapPage(feed, currentUserId);
+        return mapTimelinePage(postRepository.findFeedTimeline(currentUserId, pageable), currentUserId);
     }
 
     @Transactional(readOnly = true)
@@ -183,9 +194,22 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
+    public PostResponseDTO getPublicPostDetail(Long postId) {
+        PostEntity post = postRepository.findPublicById(postId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Post no encontrado"));
+        return mapPost(post, null);
+    }
+
+    @Transactional(readOnly = true)
     public PagedResponseDTO<PostResponseDTO> getPostsByUser(Long currentUserId, Long authorId, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
-        return mapPage(postRepository.findByAuthorVisibleToUser(authorId, currentUserId, pageable), currentUserId);
+        return mapTimelinePage(postRepository.findTimelineByAuthorVisibleToUser(authorId, currentUserId, pageable), currentUserId);
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponseDTO<PostResponseDTO> getSavedPosts(Long currentUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
+        return mapPage(postRepository.findSavedByUserVisibleToUser(currentUserId, pageable), currentUserId);
     }
 
     @Transactional
@@ -197,15 +221,35 @@ public class PostService {
         entity.setPost(post);
         entity.setAuthor(author);
         entity.setContent(request.getContent().trim());
-        return mapComment(commentRepository.save(entity));
+        return mapComment(commentRepository.save(entity), currentUserId);
     }
 
     @Transactional(readOnly = true)
     public List<CommentResponseDTO> getComments(Long currentUserId, Long postId) {
         getVisiblePost(postId, currentUserId);
         return commentRepository.findByPostIdOrderByCreatedAtAsc(postId).stream()
-                .map(this::mapComment)
+                .map(comment -> mapComment(comment, currentUserId))
                 .toList();
+    }
+
+    @Transactional
+    public CommentResponseDTO toggleCommentLike(Long currentUserId, Long postId, Long commentId) {
+        getVisiblePost(postId, currentUserId);
+        CommentEntity comment = commentRepository.findByIdAndPostId(commentId, postId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Comentario no encontrado"));
+
+        commentLikeRepository.findByCommentIdAndUserId(commentId, currentUserId)
+                .ifPresentOrElse(
+                        commentLikeRepository::delete,
+                        () -> {
+                            CommentLikeEntity like = new CommentLikeEntity();
+                            like.setComment(comment);
+                            like.setUser(getUser(currentUserId));
+                            commentLikeRepository.save(like);
+                        }
+                );
+
+        return mapComment(comment, currentUserId);
     }
 
     @Transactional
@@ -263,6 +307,7 @@ public class PostService {
         if (post.getAuthor().getId() != currentUserId) {
             throw new ResponseStatusException(BAD_REQUEST, "Solo el autor puede actualizar el estado del pick");
         }
+        ensureTipster(post.getAuthor());
 
         if (post.getType() == PostType.PICK_SIMPLE) {
             PostPickEntity pick = postPickRepository.findByPostId(postId)
@@ -308,6 +353,12 @@ public class PostService {
                     return new ToggleStateResponseDTO(false);
                 })
                 .orElse(new ToggleStateResponseDTO(false));
+    }
+
+    private void ensureTipster(UserEntity user) {
+        if (user.getRole() == null || !ROLE_TIPSTER.equalsIgnoreCase(user.getRole().getName())) {
+            throw new ResponseStatusException(BAD_REQUEST, "Solo los tipsters pueden publicar picks");
+        }
     }
 
     @Transactional
@@ -477,7 +528,62 @@ public class PostService {
         return dto;
     }
 
+    private PagedResponseDTO<PostResponseDTO> mapTimelinePage(Page<PostTimelineProjection> timelinePage, Long currentUserId) {
+        List<PostTimelineProjection> entries = timelinePage.getContent();
+        if (entries.isEmpty()) {
+            return mapPage(new PageImpl<>(List.of(), timelinePage.getPageable(), timelinePage.getTotalElements()), currentUserId);
+        }
+
+        Map<Long, PostEntity> postsById = new HashMap<>();
+        for (PostEntity post : postRepository.findAllById(entries.stream().map(PostTimelineProjection::getPostId).distinct().toList())) {
+            postsById.put(post.getId(), post);
+        }
+
+        Map<Long, UserEntity> repostUsersById = new HashMap<>();
+        List<Long> repostUserIds = entries.stream()
+                .map(PostTimelineProjection::getRepostUserId)
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+        if (!repostUserIds.isEmpty()) {
+            for (UserEntity user : userRepository.findAllById(repostUserIds)) {
+                repostUsersById.put(user.getId(), user);
+            }
+        }
+
+        List<PostResponseDTO> items = entries.stream()
+                .map(entry -> {
+                    PostEntity post = postsById.get(entry.getPostId());
+                    if (post == null) {
+                        return null;
+                    }
+                    UserEntity repostUser = entry.getRepostUserId() != null ? repostUsersById.get(entry.getRepostUserId()) : null;
+                    return mapPost(post, currentUserId, entry.getRepostId(), repostUser, entry.getRepostCreatedAt());
+                })
+                .filter(item -> item != null)
+                .toList();
+
+        PagedResponseDTO<PostResponseDTO> dto = new PagedResponseDTO<>();
+        dto.setItems(items);
+        dto.setPage(timelinePage.getNumber());
+        dto.setSize(timelinePage.getSize());
+        dto.setTotalElements(timelinePage.getTotalElements());
+        dto.setTotalPages(timelinePage.getTotalPages());
+        dto.setHasNext(timelinePage.hasNext());
+        return dto;
+    }
+
     private PostResponseDTO mapPost(PostEntity entity, Long currentUserId) {
+        return mapPost(entity, currentUserId, null, null, null);
+    }
+
+    private PostResponseDTO mapPost(
+            PostEntity entity,
+            Long currentUserId,
+            Long repostId,
+            UserEntity repostUser,
+            LocalDateTime repostedAt
+    ) {
         PostResponseDTO dto = new PostResponseDTO();
         dto.setId(entity.getId());
         dto.setType(entity.getType());
@@ -486,6 +592,10 @@ public class PostService {
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
         dto.setAuthor(mapAuthor(entity.getAuthor()));
+        dto.setTimelineEntryId(repostId != null ? "repost-" + repostId : "post-" + entity.getId());
+        dto.setRepostEntry(repostId != null);
+        dto.setRepostedAt(repostedAt);
+        dto.setRepostedBy(repostUser != null ? mapAuthor(repostUser) : null);
         dto.setMediaUrls(entity.getMedia().stream()
                 .map(PostMediaEntity::getUrl)
                 .map(postMediaStorageService::resolvePublicUrl)
@@ -535,13 +645,18 @@ public class PostService {
         return dto;
     }
 
-    private CommentResponseDTO mapComment(CommentEntity entity) {
+    private CommentResponseDTO mapComment(CommentEntity entity, Long currentUserId) {
         CommentResponseDTO dto = new CommentResponseDTO();
         dto.setId(entity.getId());
         dto.setContent(entity.getContent());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
         dto.setAuthor(mapAuthor(entity.getAuthor()));
+        dto.setLikesCount(commentLikeRepository.countByCommentId(entity.getId()));
+        dto.setLikedByCurrentUser(
+                currentUserId != null
+                        && commentLikeRepository.findByCommentIdAndUserId(entity.getId(), currentUserId).isPresent()
+        );
         return dto;
     }
 
@@ -563,14 +678,22 @@ public class PostService {
     }
 
     private PostMetricsResponseDTO buildMetrics(Long postId, Long currentUserId) {
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Post no encontrado"));
         PostMetricsResponseDTO dto = new PostMetricsResponseDTO();
         dto.setCommentsCount(commentRepository.countByPostId(postId));
         dto.setLikesCount(reactionRepository.countByPostIdAndType(postId, ReactionType.LIKE));
         dto.setDislikesCount(reactionRepository.countByPostIdAndType(postId, ReactionType.DISLIKE));
         dto.setSavesCount(savedPostRepository.countByPostId(postId));
         dto.setViewsCount(postViewRepository.countByPostId(postId));
-        dto.setSharesCount(postShareRepository.countByPostId(postId));
+        dto.setSharesCount(postShareRepository.countByPostIdAndUserIdNot(postId, post.getAuthor().getId()));
         dto.setRepostsCount(postRepostRepository.countByPostId(postId));
+        if (currentUserId == null) {
+            dto.setCurrentUserReaction(null);
+            dto.setSavedByCurrentUser(false);
+            dto.setRepostedByCurrentUser(false);
+            return dto;
+        }
         dto.setCurrentUserReaction(reactionRepository.findByPostIdAndUserId(postId, currentUserId).map(ReactionEntity::getType).orElse(null));
         dto.setSavedByCurrentUser(savedPostRepository.findByPostIdAndUserId(postId, currentUserId).isPresent());
         dto.setRepostedByCurrentUser(postRepostRepository.findByPostIdAndUserId(postId, currentUserId).isPresent());

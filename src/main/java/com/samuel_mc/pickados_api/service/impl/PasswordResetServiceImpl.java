@@ -41,7 +41,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
     @Override
     public void requestPasswordReset(String email) {
-        Optional<UserEntity> userOpt = userRepository.findByEmail(email);
+        Optional<UserEntity> userOpt = userRepository.findByEmailAndDeletedFalse(email)
+                .filter(user -> Boolean.TRUE.equals(user.getActive()));
 
         if (userOpt.isEmpty()) {
             logger.info("Se solicitó recuperación de contraseña para un email no registrado: {}", email);
@@ -72,8 +73,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         }
 
         String email = jwtUtil.getEmailFromToken(token);
-        UserEntity user = userRepository.findByEmail(email)
+        UserEntity user = userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con el email provisto"));
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            throw new IllegalArgumentException("Usuario no disponible para restablecimiento");
+        }
 
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setUpdatedAt(LocalDateTime.now());

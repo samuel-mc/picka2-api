@@ -14,7 +14,11 @@ public class PostResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime parleyEventDate;
+    private String timelineEntryId;
+    private Boolean repostEntry;
+    private LocalDateTime repostedAt;
     private PostAuthorResponseDTO author;
+    private PostAuthorResponseDTO repostedBy;
     private List<String> mediaUrls;
     private List<String> tags;
     private PostPickResponseDTO simplePick;
@@ -78,12 +82,44 @@ public class PostResponseDTO {
         this.parleyEventDate = parleyEventDate;
     }
 
+    public String getTimelineEntryId() {
+        return timelineEntryId;
+    }
+
+    public void setTimelineEntryId(String timelineEntryId) {
+        this.timelineEntryId = timelineEntryId;
+    }
+
+    public Boolean getRepostEntry() {
+        return repostEntry;
+    }
+
+    public void setRepostEntry(Boolean repostEntry) {
+        this.repostEntry = repostEntry;
+    }
+
+    public LocalDateTime getRepostedAt() {
+        return repostedAt;
+    }
+
+    public void setRepostedAt(LocalDateTime repostedAt) {
+        this.repostedAt = repostedAt;
+    }
+
     public PostAuthorResponseDTO getAuthor() {
         return author;
     }
 
     public void setAuthor(PostAuthorResponseDTO author) {
         this.author = author;
+    }
+
+    public PostAuthorResponseDTO getRepostedBy() {
+        return repostedBy;
+    }
+
+    public void setRepostedBy(PostAuthorResponseDTO repostedBy) {
+        this.repostedBy = repostedBy;
     }
 
     public List<String> getMediaUrls() {

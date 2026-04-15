@@ -40,7 +40,7 @@ public class UserProfileService {
 
     @Transactional(readOnly = true)
     public PublicProfileResponseDTO getPublicProfile(long currentUserId, long targetUserId) {
-        UserEntity user = userRepository.findById(targetUserId)
+        UserEntity user = userRepository.findByIdAndDeletedFalse(targetUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
         TipsterProfileEntity tipsterProfile = tipsterProfileRepository.findByUser(user).orElse(null);

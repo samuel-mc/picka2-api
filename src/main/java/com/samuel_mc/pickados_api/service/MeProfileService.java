@@ -51,12 +51,13 @@ public class MeProfileService {
 
     @Transactional(readOnly = true)
     public MeProfileResponseDTO getProfile(long userId) {
-        UserEntity user = userRepository.findById(userId)
+        UserEntity user = userRepository.findByIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         MeProfileResponseDTO dto = new MeProfileResponseDTO();
         dto.setId(user.getId());
         dto.setName(user.getName());
         dto.setLastname(user.getLastname());
+        dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
 
         if (isTipster(user)) {
@@ -80,7 +81,7 @@ public class MeProfileService {
 
     @Transactional
     public MeProfileResponseDTO updateProfile(long userId, UpdateMeProfileRequestDTO body) {
-        UserEntity user = userRepository.findById(userId)
+        UserEntity user = userRepository.findByIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         if (body.getName() != null && !body.getName().isBlank()) {
@@ -113,7 +114,7 @@ public class MeProfileService {
         if (!profileAvatarStorageService.isKeyOwnedByUser(userId, body.getObjectKey())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Clave de objeto no válida para este usuario");
         }
-        UserEntity user = userRepository.findById(userId)
+        UserEntity user = userRepository.findByIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         if (isTipster(user)) {

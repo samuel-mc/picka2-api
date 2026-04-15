@@ -3,6 +3,7 @@ package com.samuel_mc.pickados_api.config;
 import com.samuel_mc.pickados_api.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -19,6 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -27,10 +29,16 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final String allowedOrigins;
 
-    public SecurityConfig(CustomUserDetailsService uds, JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(
+            CustomUserDetailsService uds,
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            @Value("${app.cors.allowed-origins:http://localhost:5173}") String allowedOrigins
+    ) {
         this.userDetailsService = uds;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.allowedOrigins = allowedOrigins;
     }
 
     @Bean
@@ -49,10 +57,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -69,16 +81,25 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers("/auth/register-user").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/auth/register-admin").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/auth/register-tipster").permitAll()
                         .requestMatchers("/auth/verify-email").permitAll()
                         .requestMatchers("/auth/request-password-reset").permitAll()
                         .requestMatchers("/auth/reset-password").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/analytics/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/roles/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/users/admins").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/users/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/users/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET,"/catalogs/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/catalogs/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT,"/catalogs/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.DELETE,"/catalogs/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET,"/sportsbooks").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts/public/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/posts/media/**").hasAuthority("ROLE_TIPSTER")
+                        .requestMatchers(HttpMethod.POST, "/posts").hasAuthority("ROLE_TIPSTER")
+                        .requestMatchers(HttpMethod.PUT, "/posts/*/pick-status").hasAuthority("ROLE_TIPSTER")
                         .requestMatchers(HttpMethod.GET,"/posts/**").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
