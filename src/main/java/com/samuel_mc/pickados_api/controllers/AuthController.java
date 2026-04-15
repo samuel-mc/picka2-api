@@ -1,6 +1,7 @@
 package com.samuel_mc.pickados_api.controllers;
 
 import com.samuel_mc.pickados_api.dto.AuthRequestDTO;
+import com.samuel_mc.pickados_api.dto.AuthAvailabilityResponseDTO;
 import com.samuel_mc.pickados_api.dto.AuthSessionResponseDTO;
 import com.samuel_mc.pickados_api.dto.GenericResponseDTO;
 import com.samuel_mc.pickados_api.dto.RegisterAdminRequestDTO;
@@ -13,6 +14,7 @@ import com.samuel_mc.pickados_api.service.PasswordResetService;
 import com.samuel_mc.pickados_api.service.AuthRateLimitService;
 import com.samuel_mc.pickados_api.service.facade.UserRegistrationFacade;
 import com.samuel_mc.pickados_api.service.EmailVerificationService;
+import com.samuel_mc.pickados_api.repository.UserRepository;
 import com.samuel_mc.pickados_api.util.JwtUtil;
 import com.samuel_mc.pickados_api.util.ResponseUtils;
 import jakarta.validation.Valid;
@@ -57,6 +59,7 @@ public class AuthController {
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
     private final AuthRateLimitService authRateLimitService;
+    private final UserRepository userRepository;
     private final String authCookieName;
     private final boolean authCookieSecure;
     private final String authCookieSameSite;
@@ -65,6 +68,7 @@ public class AuthController {
     public AuthController(AuthenticationManager authenticationManager, UserRegistrationFacade userRegistrationFacade,
             JwtUtil jwtUtil, ResponseUtils responseUtils, EmailVerificationService emailVerificationService,
             PasswordResetService passwordResetService, AuthRateLimitService authRateLimitService,
+            UserRepository userRepository,
             @Value("${app.auth.cookie-name:picka2_auth}") String authCookieName,
             @Value("${app.auth.cookie-secure:false}") boolean authCookieSecure,
             @Value("${app.auth.cookie-same-site:Lax}") String authCookieSameSite,
@@ -76,6 +80,7 @@ public class AuthController {
         this.emailVerificationService = emailVerificationService;
         this.passwordResetService = passwordResetService;
         this.authRateLimitService = authRateLimitService;
+        this.userRepository = userRepository;
         this.authCookieName = authCookieName;
         this.authCookieSecure = authCookieSecure;
         this.authCookieSameSite = authCookieSameSite;
@@ -163,6 +168,38 @@ public class AuthController {
             @RequestBody @Valid RegisterTipsterRequestDTO req) {
         this.userRegistrationFacade.processRegistration(req);
         return this.responseUtils.generateSuccessResponse(null);
+    }
+
+    @GetMapping("/availability")
+    public ResponseEntity<GenericResponseDTO<AuthAvailabilityResponseDTO>> checkAvailability(
+            @RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "email", required = false) String email
+    ) {
+        String normalizedUsername = username == null ? null : username.trim().toLowerCase(Locale.ROOT);
+        String normalizedEmail = email == null ? null : email.trim().toLowerCase(Locale.ROOT);
+
+        if ((normalizedUsername == null || normalizedUsername.isBlank())
+                && (normalizedEmail == null || normalizedEmail.isBlank())) {
+            return ResponseEntity.badRequest().body(
+                    GenericResponseDTO.<AuthAvailabilityResponseDTO>builder()
+                            .success(false)
+                            .code("BAD_REQUEST")
+                            .message("Debes enviar username o email para validar disponibilidad")
+                            .timestamp(java.time.LocalDateTime.now())
+                            .build()
+            );
+        }
+
+        AuthAvailabilityResponseDTO dto = new AuthAvailabilityResponseDTO(
+                normalizedUsername == null || normalizedUsername.isBlank()
+                        ? null
+                        : !userRepository.existsByUsername(normalizedUsername),
+                normalizedEmail == null || normalizedEmail.isBlank()
+                        ? null
+                        : !userRepository.existsByEmail(normalizedEmail)
+        );
+
+        return responseUtils.generateSuccessResponse(dto);
     }
 
     @Operation(summary = "Verificar correo electrónico", description = "Verifica el correo mediante un token JWT")

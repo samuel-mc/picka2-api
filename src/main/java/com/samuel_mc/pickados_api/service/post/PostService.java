@@ -634,11 +634,11 @@ public class PostService {
         dto.setVisibility(entity.getVisibility());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
-        dto.setAuthor(mapAuthor(entity.getAuthor()));
+        dto.setAuthor(mapAuthor(entity.getAuthor(), currentUserId));
         dto.setTimelineEntryId(repostId != null ? "repost-" + repostId : "post-" + entity.getId());
         dto.setRepostEntry(repostId != null);
         dto.setRepostedAt(repostedAt);
-        dto.setRepostedBy(repostUser != null ? mapAuthor(repostUser) : null);
+        dto.setRepostedBy(repostUser != null ? mapAuthor(repostUser, currentUserId) : null);
         dto.setMediaUrls(entity.getMedia().stream()
                 .map(PostMediaEntity::getUrl)
                 .map(postMediaStorageService::resolvePublicUrl)
@@ -694,7 +694,7 @@ public class PostService {
         dto.setContent(entity.getContent());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
-        dto.setAuthor(mapAuthor(entity.getAuthor()));
+        dto.setAuthor(mapAuthor(entity.getAuthor(), currentUserId));
         dto.setParentCommentId(entity.getParentComment() != null ? entity.getParentComment().getId() : null);
         dto.setReplyingToUsername(entity.getParentComment() != null ? entity.getParentComment().getAuthor().getUsername() : null);
         dto.setLikesCount(commentLikeRepository.countByCommentId(entity.getId()));
@@ -741,7 +741,7 @@ public class PostService {
         return roots;
     }
 
-    private PostAuthorResponseDTO mapAuthor(UserEntity user) {
+    private PostAuthorResponseDTO mapAuthor(UserEntity user, Long currentUserId) {
         PostAuthorResponseDTO dto = new PostAuthorResponseDTO();
         dto.setId(user.getId());
         dto.setName((user.getName() + " " + user.getLastname()).trim());
@@ -755,6 +755,11 @@ public class PostService {
         boolean validated = tipsterProfile != null && Boolean.TRUE.equals(tipsterProfile.getValidated());
         dto.setValidatedTipster(validated);
         dto.setBadge(validated ? "Verified Tipster" : null);
+        dto.setFollowedByCurrentUser(
+                currentUserId != null
+                        && !user.getId().equals(currentUserId)
+                        && followRepository.findByFollowerIdAndFollowedId(currentUserId, user.getId()).isPresent()
+        );
         return dto;
     }
 

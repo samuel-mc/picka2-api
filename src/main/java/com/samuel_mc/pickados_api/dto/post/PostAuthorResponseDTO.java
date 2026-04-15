@@ -7,6 +7,7 @@ public class PostAuthorResponseDTO {
     private String avatarUrl;
     private Boolean validatedTipster;
     private String badge;
+    private Boolean followedByCurrentUser;
 
     public Long getId() {
         return id;
@@ -54,5 +55,13 @@ public class PostAuthorResponseDTO {
 
     public void setBadge(String badge) {
         this.badge = badge;
+    }
+
+    public Boolean getFollowedByCurrentUser() {
+        return followedByCurrentUser;
+    }
+
+    public void setFollowedByCurrentUser(Boolean followedByCurrentUser) {
+        this.followedByCurrentUser = followedByCurrentUser;
     }
 }

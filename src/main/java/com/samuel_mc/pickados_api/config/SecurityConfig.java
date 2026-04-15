@@ -83,6 +83,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/register-user").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/auth/register-admin").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/auth/register-tipster").permitAll()
+                        .requestMatchers("/auth/availability").permitAll()
                         .requestMatchers("/auth/verify-email").permitAll()
                         .requestMatchers("/auth/request-password-reset").permitAll()
                         .requestMatchers("/auth/reset-password").permitAll()
