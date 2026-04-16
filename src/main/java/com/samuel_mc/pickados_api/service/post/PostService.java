@@ -757,7 +757,7 @@ public class PostService {
         dto.setBadge(validated ? "Verified Tipster" : null);
         dto.setFollowedByCurrentUser(
                 currentUserId != null
-                        && !user.getId().equals(currentUserId)
+                        && user.getId() != currentUserId
                         && followRepository.findByFollowerIdAndFollowedId(currentUserId, user.getId()).isPresent()
         );
         return dto;
