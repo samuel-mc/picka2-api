@@ -251,6 +251,81 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
     Page<PostTimelineProjection> findTimelineByAuthorVisibleToUser(@Param("authorId") Long authorId, @Param("currentUserId") Long currentUserId, Pageable pageable);
 
     @Query("""
+            select p from PostEntity p
+            where p.author.deleted = false
+              and p.visibility <> com.samuel_mc.pickados_api.entity.enums.PostVisibility.PRIVATE
+              and exists (
+                select 1 from FollowEntity f
+                where f.follower.id = :currentUserId and f.followed.id = p.author.id
+              )
+            order by p.createdAt desc
+            """)
+    Page<PostEntity> findFollowingFeed(@Param("currentUserId") Long currentUserId, Pageable pageable);
+
+    @Query(value = """
+            select t.postId as postId, t.eventAt as eventAt, null as repostId, null as repostUserId, null as repostCreatedAt
+            from (
+                select
+                    p.id as postId,
+                    p.created_at as eventAt,
+                    (
+                        (coalesce(r.likes, 0) * 2)
+                        + (coalesce(c.comments, 0) * 3)
+                        + (coalesce(s.saves, 0) * 4)
+                        + (coalesce(rp.reposts, 0) * 4)
+                        - (coalesce(r.dislikes, 0) * 2)
+                        + (
+                            case
+                                when timestampdiff(hour, p.created_at, now()) < 6 then 20
+                                when timestampdiff(hour, p.created_at, now()) < 24 then 10
+                                when timestampdiff(hour, p.created_at, now()) < 72 then 5
+                                else 0
+                            end
+                        )
+                    ) as featuredScore
+                from posts p
+                join users author on author.id = p.user_id
+                left join (
+                    select
+                        post_id,
+                        sum(case when type = 'LIKE' then 1 else 0 end) as likes,
+                        sum(case when type = 'DISLIKE' then 1 else 0 end) as dislikes
+                    from reactions
+                    group by post_id
+                ) r on r.post_id = p.id
+                left join (
+                    select post_id, count(*) as comments
+                    from comments
+                    group by post_id
+                ) c on c.post_id = p.id
+                left join (
+                    select post_id, count(*) as saves
+                    from saved_posts
+                    group by post_id
+                ) s on s.post_id = p.id
+                left join (
+                    select post_id, count(*) as reposts
+                    from post_reposts
+                    group by post_id
+                ) rp on rp.post_id = p.id
+                where coalesce(author.deleted, false) = false
+                  and p.visibility = 'PUBLIC'
+                  and p.created_at >= (now() - interval 7 day)
+            ) t
+            order by t.featuredScore desc, t.eventAt desc, t.postId desc
+            """,
+            countQuery = """
+            select count(*)
+            from posts p
+            join users author on author.id = p.user_id
+            where coalesce(author.deleted, false) = false
+              and p.visibility = 'PUBLIC'
+              and p.created_at >= (now() - interval 7 day)
+            """,
+            nativeQuery = true)
+    Page<PostTimelineProjection> findDiscoverTimeline(Pageable pageable);
+
+    @Query("""
             select p from SavedPostEntity s
             join s.post p
             where s.user.id = :currentUserId and p.author.deleted = false and (

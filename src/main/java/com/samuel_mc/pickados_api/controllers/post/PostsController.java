@@ -5,6 +5,7 @@ import com.samuel_mc.pickados_api.dto.post.CommentRequestDTO;
 import com.samuel_mc.pickados_api.dto.post.CommentResponseDTO;
 import com.samuel_mc.pickados_api.dto.post.CompletePostMediaRequestDTO;
 import com.samuel_mc.pickados_api.dto.post.CreatePostRequestDTO;
+import com.samuel_mc.pickados_api.dto.post.FollowingFeedResponseDTO;
 import com.samuel_mc.pickados_api.dto.post.PagedResponseDTO;
 import com.samuel_mc.pickados_api.dto.post.PostMediaUploadResponseDTO;
 import com.samuel_mc.pickados_api.dto.post.PostMetricsResponseDTO;
@@ -93,6 +94,24 @@ public class PostsController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return responseUtils.generateSuccessResponse(postService.getFeed(requireUserId(principal), page, size));
+    }
+
+    @GetMapping("/feed/following")
+    public ResponseEntity<GenericResponseDTO<FollowingFeedResponseDTO>> getFollowingFeed(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return responseUtils.generateSuccessResponse(postService.getFollowingFeed(requireUserId(principal), page, size));
+    }
+
+    @GetMapping("/feed/discover")
+    public ResponseEntity<GenericResponseDTO<PagedResponseDTO<PostResponseDTO>>> getDiscoverFeed(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return responseUtils.generateSuccessResponse(postService.getDiscoverFeed(requireUserId(principal), page, size));
     }
 
     @GetMapping("/saved")

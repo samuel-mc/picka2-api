@@ -8,6 +8,8 @@ import com.samuel_mc.pickados_api.dto.catalog.CompetitionRequestDTO;
 import com.samuel_mc.pickados_api.dto.catalog.CompetitionResponseDTO;
 import com.samuel_mc.pickados_api.dto.catalog.PresignCatalogLogoRequestDTO;
 import com.samuel_mc.pickados_api.dto.catalog.PresignCatalogLogoResponseDTO;
+import com.samuel_mc.pickados_api.dto.catalog.SportsbookCatalogRequestDTO;
+import com.samuel_mc.pickados_api.dto.catalog.SportsbookCatalogResponseDTO;
 import com.samuel_mc.pickados_api.dto.catalog.TeamRequestDTO;
 import com.samuel_mc.pickados_api.dto.catalog.TeamResponseDTO;
 import com.samuel_mc.pickados_api.service.CatalogService;
@@ -205,6 +207,48 @@ public class CatalogController {
     public ResponseEntity<GenericResponseDTO<String>> deleteTeam(@PathVariable Long id) {
         catalogService.deleteTeam(id);
         return responseUtils.generateSuccessResponse("Equipo eliminado correctamente");
+    }
+
+    @GetMapping("/sportsbooks")
+    public ResponseEntity<GenericResponseDTO<List<SportsbookCatalogResponseDTO>>> getSportsbooks() {
+        return responseUtils.generateSuccessResponse(catalogService.getSportsbooks());
+    }
+
+    @PostMapping("/sportsbooks")
+    public ResponseEntity<GenericResponseDTO<SportsbookCatalogResponseDTO>> createSportsbook(
+            @RequestBody @Valid SportsbookCatalogRequestDTO request
+    ) {
+        return responseUtils.generateSuccessResponse(catalogService.createSportsbook(request));
+    }
+
+    @PutMapping("/sportsbooks/{id}")
+    public ResponseEntity<GenericResponseDTO<SportsbookCatalogResponseDTO>> updateSportsbook(
+            @PathVariable Long id,
+            @RequestBody @Valid SportsbookCatalogRequestDTO request
+    ) {
+        return responseUtils.generateSuccessResponse(catalogService.updateSportsbook(id, request));
+    }
+
+    @PostMapping("/sportsbooks/{id}/logo/presign")
+    public ResponseEntity<GenericResponseDTO<PresignCatalogLogoResponseDTO>> presignSportsbookLogo(
+            @PathVariable Long id,
+            @RequestBody @Valid PresignCatalogLogoRequestDTO request
+    ) {
+        return responseUtils.generateSuccessResponse(catalogService.presignSportsbookLogo(id, request.getContentType()));
+    }
+
+    @PostMapping("/sportsbooks/{id}/logo/complete")
+    public ResponseEntity<GenericResponseDTO<SportsbookCatalogResponseDTO>> completeSportsbookLogo(
+            @PathVariable Long id,
+            @RequestBody @Valid CompleteCatalogLogoRequestDTO request
+    ) {
+        return responseUtils.generateSuccessResponse(catalogService.completeSportsbookLogo(id, request));
+    }
+
+    @DeleteMapping("/sportsbooks/{id}")
+    public ResponseEntity<GenericResponseDTO<String>> deleteSportsbook(@PathVariable Long id) {
+        catalogService.deleteSportsbook(id);
+        return responseUtils.generateSuccessResponse("Sportsbook eliminado correctamente");
     }
 
     @GetMapping("/home-prashes")

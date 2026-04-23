@@ -12,4 +12,5 @@ public interface PostPickRepository extends JpaRepository<PostPickEntity, Long> 
     long countByResultStatus(ResultStatus resultStatus);
     long countByResultStatusNot(ResultStatus resultStatus);
     long countByResultStatusNotAndUpdatedAtAfter(ResultStatus resultStatus, LocalDateTime updatedAt);
+    long countBySportsbook_Id(Long sportsbookId);
 }

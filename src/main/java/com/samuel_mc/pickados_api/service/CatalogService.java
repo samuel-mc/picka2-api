@@ -6,6 +6,8 @@ import com.samuel_mc.pickados_api.dto.catalog.CompleteCatalogLogoRequestDTO;
 import com.samuel_mc.pickados_api.dto.catalog.CompetitionRequestDTO;
 import com.samuel_mc.pickados_api.dto.catalog.CompetitionResponseDTO;
 import com.samuel_mc.pickados_api.dto.catalog.PresignCatalogLogoResponseDTO;
+import com.samuel_mc.pickados_api.dto.catalog.SportsbookCatalogRequestDTO;
+import com.samuel_mc.pickados_api.dto.catalog.SportsbookCatalogResponseDTO;
 import com.samuel_mc.pickados_api.dto.catalog.TeamRequestDTO;
 import com.samuel_mc.pickados_api.dto.catalog.TeamResponseDTO;
 
@@ -39,6 +41,13 @@ public interface CatalogService {
     PresignCatalogLogoResponseDTO presignTeamLogo(Long id, String contentType);
     TeamResponseDTO completeTeamLogo(Long id, CompleteCatalogLogoRequestDTO request);
     void deleteTeam(Long id);
+
+    List<SportsbookCatalogResponseDTO> getSportsbooks();
+    SportsbookCatalogResponseDTO createSportsbook(SportsbookCatalogRequestDTO request);
+    SportsbookCatalogResponseDTO updateSportsbook(Long id, SportsbookCatalogRequestDTO request);
+    PresignCatalogLogoResponseDTO presignSportsbookLogo(Long id, String contentType);
+    SportsbookCatalogResponseDTO completeSportsbookLogo(Long id, CompleteCatalogLogoRequestDTO request);
+    void deleteSportsbook(Long id);
 
     List<CatalogItemResponseDTO> getHomePrashes();
     CatalogItemResponseDTO generateHomePrashe();

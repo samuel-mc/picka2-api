@@ -6,6 +6,7 @@ public class SportsbookResponseDTO {
     private Long id;
     private String name;
     private String baseUrl;
+    private String logoUrl;
     private Boolean active;
     private LocalDateTime createdAt;
 
@@ -31,6 +32,14 @@ public class SportsbookResponseDTO {
 
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
+    }
+
+    public String getLogoUrl() {
+        return logoUrl;
+    }
+
+    public void setLogoUrl(String logoUrl) {
+        this.logoUrl = logoUrl;
     }
 
     public Boolean getActive() {

@@ -21,6 +21,9 @@ public class SportsbookEntity extends AuditableEntity {
     @Column(name = "base_url", length = 255)
     private String baseUrl;
 
+    @Column(name = "logo_key", length = 512)
+    private String logoKey;
+
     @Column(nullable = false)
     private Boolean active = true;
 
@@ -46,6 +49,14 @@ public class SportsbookEntity extends AuditableEntity {
 
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
+    }
+
+    public String getLogoKey() {
+        return logoKey;
+    }
+
+    public void setLogoKey(String logoKey) {
+        this.logoKey = logoKey;
     }
 
     public Boolean getActive() {

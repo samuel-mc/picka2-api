@@ -4,6 +4,7 @@ import com.samuel_mc.pickados_api.config.R2Properties;
 import com.samuel_mc.pickados_api.dto.post.CommentRequestDTO;
 import com.samuel_mc.pickados_api.dto.post.CommentResponseDTO;
 import com.samuel_mc.pickados_api.dto.post.CreatePostRequestDTO;
+import com.samuel_mc.pickados_api.dto.post.FollowingFeedResponseDTO;
 import com.samuel_mc.pickados_api.dto.post.PagedResponseDTO;
 import com.samuel_mc.pickados_api.dto.post.ParleySelectionRequestDTO;
 import com.samuel_mc.pickados_api.dto.post.ParleySelectionResponseDTO;
@@ -193,6 +194,23 @@ public class PostService {
     public PagedResponseDTO<PostResponseDTO> getFeed(Long currentUserId, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
         return mapTimelinePage(postRepository.findFeedTimeline(currentUserId, pageable), currentUserId);
+    }
+
+    @Transactional(readOnly = true)
+    public FollowingFeedResponseDTO getFollowingFeed(Long currentUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
+        FollowingFeedResponseDTO response = new FollowingFeedResponseDTO();
+        response.setFollowingCount(followRepository.countByFollowerId(currentUserId));
+        response.setFeed(mapPage(postRepository.findFollowingFeed(currentUserId, pageable), currentUserId));
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponseDTO<PostResponseDTO> getDiscoverFeed(Long currentUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
+        PagedResponseDTO<PostResponseDTO> dto = mapTimelinePage(postRepository.findDiscoverTimeline(pageable), currentUserId);
+        dto.setItems(spreadAuthors(dto.getItems(), 2));
+        return dto;
     }
 
     @Transactional(readOnly = true)
@@ -614,6 +632,50 @@ public class PostService {
         dto.setTotalPages(timelinePage.getTotalPages());
         dto.setHasNext(timelinePage.hasNext());
         return dto;
+    }
+
+    private List<PostResponseDTO> spreadAuthors(List<PostResponseDTO> items, int maxConsecutiveSameAuthor) {
+        if (items == null || items.size() < 3 || maxConsecutiveSameAuthor < 1) {
+            return items;
+        }
+
+        List<PostResponseDTO> remaining = new ArrayList<>(items);
+        List<PostResponseDTO> ordered = new ArrayList<>(items.size());
+
+        Long lastAuthorId = null;
+        int consecutive = 0;
+
+        while (!remaining.isEmpty()) {
+            int pickIndex = -1;
+            for (int i = 0; i < remaining.size(); i++) {
+                PostResponseDTO candidate = remaining.get(i);
+                Long candidateAuthorId = candidate != null && candidate.getAuthor() != null ? candidate.getAuthor().getId() : null;
+                if (lastAuthorId != null
+                        && candidateAuthorId != null
+                        && lastAuthorId.equals(candidateAuthorId)
+                        && consecutive >= maxConsecutiveSameAuthor) {
+                    continue;
+                }
+                pickIndex = i;
+                break;
+            }
+
+            if (pickIndex == -1) {
+                pickIndex = 0;
+            }
+
+            PostResponseDTO picked = remaining.remove(pickIndex);
+            Long pickedAuthorId = picked != null && picked.getAuthor() != null ? picked.getAuthor().getId() : null;
+            if (lastAuthorId != null && pickedAuthorId != null && lastAuthorId.equals(pickedAuthorId)) {
+                consecutive += 1;
+            } else {
+                lastAuthorId = pickedAuthorId;
+                consecutive = 1;
+            }
+            ordered.add(picked);
+        }
+
+        return ordered;
     }
 
     private PostResponseDTO mapPost(PostEntity entity, Long currentUserId) {

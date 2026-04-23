@@ -6,12 +6,15 @@ import com.samuel_mc.pickados_api.dto.catalog.CompleteCatalogLogoRequestDTO;
 import com.samuel_mc.pickados_api.dto.catalog.CompetitionRequestDTO;
 import com.samuel_mc.pickados_api.dto.catalog.CompetitionResponseDTO;
 import com.samuel_mc.pickados_api.dto.catalog.PresignCatalogLogoResponseDTO;
+import com.samuel_mc.pickados_api.dto.catalog.SportsbookCatalogRequestDTO;
+import com.samuel_mc.pickados_api.dto.catalog.SportsbookCatalogResponseDTO;
 import com.samuel_mc.pickados_api.dto.catalog.TeamRequestDTO;
 import com.samuel_mc.pickados_api.dto.catalog.TeamResponseDTO;
 import com.samuel_mc.pickados_api.entity.CompetitionEntity;
 import com.samuel_mc.pickados_api.entity.CountryEntity;
 import com.samuel_mc.pickados_api.entity.HomePrasheEntity;
 import com.samuel_mc.pickados_api.entity.SportEntity;
+import com.samuel_mc.pickados_api.entity.SportsbookEntity;
 import com.samuel_mc.pickados_api.entity.TeamEntity;
 import com.samuel_mc.pickados_api.exception.GenericException;
 import com.samuel_mc.pickados_api.repository.CompetitionRepository;
@@ -19,6 +22,9 @@ import com.samuel_mc.pickados_api.repository.CountryRepository;
 import com.samuel_mc.pickados_api.repository.HomePrasheRepository;
 import com.samuel_mc.pickados_api.repository.SportRepository;
 import com.samuel_mc.pickados_api.repository.TeamRepository;
+import com.samuel_mc.pickados_api.repository.post.PostParleyRepository;
+import com.samuel_mc.pickados_api.repository.post.PostPickRepository;
+import com.samuel_mc.pickados_api.repository.post.SportsbookRepository;
 import com.samuel_mc.pickados_api.service.CatalogLogoStorageService;
 import com.samuel_mc.pickados_api.service.CatalogService;
 import com.samuel_mc.pickados_api.util.ResponseCode;
@@ -37,6 +43,9 @@ public class CatalogServiceImpl implements CatalogService {
     private final CompetitionRepository competitionRepository;
     private final TeamRepository teamRepository;
     private final HomePrasheRepository homePrasheRepository;
+    private final SportsbookRepository sportsbookRepository;
+    private final PostPickRepository postPickRepository;
+    private final PostParleyRepository postParleyRepository;
     private final CatalogLogoStorageService catalogLogoStorageService;
 
     public CatalogServiceImpl(
@@ -45,6 +54,9 @@ public class CatalogServiceImpl implements CatalogService {
             CompetitionRepository competitionRepository,
             TeamRepository teamRepository,
             HomePrasheRepository homePrasheRepository,
+            SportsbookRepository sportsbookRepository,
+            PostPickRepository postPickRepository,
+            PostParleyRepository postParleyRepository,
             CatalogLogoStorageService catalogLogoStorageService
     ) {
         this.sportRepository = sportRepository;
@@ -52,6 +64,9 @@ public class CatalogServiceImpl implements CatalogService {
         this.competitionRepository = competitionRepository;
         this.teamRepository = teamRepository;
         this.homePrasheRepository = homePrasheRepository;
+        this.sportsbookRepository = sportsbookRepository;
+        this.postPickRepository = postPickRepository;
+        this.postParleyRepository = postParleyRepository;
         this.catalogLogoStorageService = catalogLogoStorageService;
     }
 
@@ -325,6 +340,71 @@ public class CatalogServiceImpl implements CatalogService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<SportsbookCatalogResponseDTO> getSportsbooks() {
+        return sportsbookRepository.findAllByOrderByNameAsc().stream()
+                .map(this::mapSportsbook)
+                .toList();
+    }
+
+    @Override
+    public SportsbookCatalogResponseDTO createSportsbook(SportsbookCatalogRequestDTO request) {
+        String normalizedName = normalizeName(request.getName());
+        sportsbookRepository.findByNameIgnoreCase(normalizedName)
+                .ifPresent(existing -> {
+                    throw new GenericException(ResponseCode.BAD_REQUEST.getCode(), "Ya existe un sportsbook con ese nombre");
+                });
+
+        SportsbookEntity entity = new SportsbookEntity();
+        entity.setName(normalizedName);
+        entity.setBaseUrl(normalizeUrl(request.getBaseUrl()));
+        entity.setActive(resolveActive(request.getActive()));
+        return mapSportsbook(sportsbookRepository.save(entity));
+    }
+
+    @Override
+    public SportsbookCatalogResponseDTO updateSportsbook(Long id, SportsbookCatalogRequestDTO request) {
+        SportsbookEntity entity = getSportsbook(id);
+        String normalizedName = normalizeName(request.getName());
+        sportsbookRepository.findByNameIgnoreCase(normalizedName)
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new GenericException(ResponseCode.BAD_REQUEST.getCode(), "Ya existe un sportsbook con ese nombre");
+                });
+
+        entity.setName(normalizedName);
+        entity.setBaseUrl(normalizeUrl(request.getBaseUrl()));
+        entity.setActive(resolveActive(request.getActive()));
+        return mapSportsbook(sportsbookRepository.save(entity));
+    }
+
+    @Override
+    public PresignCatalogLogoResponseDTO presignSportsbookLogo(Long id, String contentType) {
+        getSportsbook(id);
+        return catalogLogoStorageService.presignPut("sportsbooks", id, contentType);
+    }
+
+    @Override
+    public SportsbookCatalogResponseDTO completeSportsbookLogo(Long id, CompleteCatalogLogoRequestDTO request) {
+        SportsbookEntity entity = getSportsbook(id);
+        if (!catalogLogoStorageService.isOwnedByCatalogEntity("sportsbooks", id, request.getObjectKey())) {
+            throw new GenericException(ResponseCode.BAD_REQUEST.getCode(), "Clave de logo no válida para este sportsbook");
+        }
+        entity.setLogoKey(request.getObjectKey());
+        return mapSportsbook(sportsbookRepository.save(entity));
+    }
+
+    @Override
+    public void deleteSportsbook(Long id) {
+        SportsbookEntity entity = getSportsbook(id);
+        if (postPickRepository.countBySportsbook_Id(id) > 0 || postParleyRepository.countBySportsbook_Id(id) > 0) {
+            throw new GenericException(ResponseCode.BAD_REQUEST.getCode(),
+                    "No se puede eliminar el sportsbook porque ya está asociado a picks");
+        }
+        sportsbookRepository.delete(entity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<CatalogItemResponseDTO> getHomePrashes() {
         return homePrasheRepository.findAll().stream()
                 .map(this::mapHomePrashe)
@@ -426,6 +506,16 @@ public class CatalogServiceImpl implements CatalogService {
                 .build();
     }
 
+    private SportsbookCatalogResponseDTO mapSportsbook(SportsbookEntity entity) {
+        return SportsbookCatalogResponseDTO.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .active(entity.getActive())
+                .baseUrl(entity.getBaseUrl())
+                .logoUrl(catalogLogoStorageService.resolvePublicUrl(entity.getLogoKey()))
+                .build();
+    }
+
     private CatalogItemResponseDTO mapHomePrashe(HomePrasheEntity entity) {
         return CatalogItemResponseDTO.builder()
                 .id(entity.getId())
@@ -460,8 +550,19 @@ public class CatalogServiceImpl implements CatalogService {
                 .orElseThrow(() -> new GenericException(ResponseCode.NOT_FOUND.getCode(), "Home prashe no encontrado"));
     }
 
+    private SportsbookEntity getSportsbook(Long id) {
+        return sportsbookRepository.findById(id)
+                .orElseThrow(() -> new GenericException(ResponseCode.NOT_FOUND.getCode(), "Sportsbook no encontrado"));
+    }
+
     private String normalizeName(String value) {
         return value == null ? null : value.trim();
+    }
+
+    private String normalizeUrl(String value) {
+        if (value == null) return null;
+        String trimmed = value.trim();
+        return trimmed.isBlank() ? null : trimmed;
     }
 
     private Boolean resolveActive(Boolean active) {

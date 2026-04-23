@@ -2,6 +2,7 @@ package com.samuel_mc.pickados_api.service.post;
 
 import com.samuel_mc.pickados_api.dto.post.SportsbookResponseDTO;
 import com.samuel_mc.pickados_api.repository.post.SportsbookRepository;
+import com.samuel_mc.pickados_api.service.CatalogLogoStorageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,9 +12,11 @@ import java.util.List;
 public class SportsbookService {
 
     private final SportsbookRepository sportsbookRepository;
+    private final CatalogLogoStorageService catalogLogoStorageService;
 
-    public SportsbookService(SportsbookRepository sportsbookRepository) {
+    public SportsbookService(SportsbookRepository sportsbookRepository, CatalogLogoStorageService catalogLogoStorageService) {
         this.sportsbookRepository = sportsbookRepository;
+        this.catalogLogoStorageService = catalogLogoStorageService;
     }
 
     @Transactional(readOnly = true)
@@ -28,6 +31,7 @@ public class SportsbookService {
         dto.setId(entity.getId());
         dto.setName(entity.getName());
         dto.setBaseUrl(entity.getBaseUrl());
+        dto.setLogoUrl(catalogLogoStorageService.resolvePublicUrl(entity.getLogoKey()));
         dto.setActive(entity.getActive());
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;
