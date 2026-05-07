@@ -54,3 +54,4 @@ build/
 !.env.prod.example
 *.secrets.*
 **/*secrets*.properties
+scripts/seed_catalog_countries_leagues_teams.sql
