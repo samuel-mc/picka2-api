@@ -10,9 +10,9 @@ import com.samuel_mc.pickados_api.repository.RoleRepository;
 import com.samuel_mc.pickados_api.repository.TipsterProfileRepository;
 import com.samuel_mc.pickados_api.repository.UserRepository;
 import com.samuel_mc.pickados_api.service.EmailService;
+import com.samuel_mc.pickados_api.service.ReferralService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import com.samuel_mc.pickados_api.util.JwtUtil;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,18 +36,25 @@ public class TipsterRegistrationStrategy implements UserRegistrationStrategy {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
+    private final ReferralService referralService;
 
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
     public TipsterRegistrationStrategy(UserRepository userRepository, RoleRepository roleRepository,
-            TipsterProfileRepository tipsterProfileRepository, PasswordEncoder passwordEncoder, EmailService emailService, JwtUtil jwtUtil) {
+            TipsterProfileRepository tipsterProfileRepository,
+            PasswordEncoder passwordEncoder,
+            EmailService emailService,
+            JwtUtil jwtUtil,
+            ReferralService referralService
+    ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.tipsterProfileRepository = tipsterProfileRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.jwtUtil = jwtUtil;
+        this.referralService = referralService;
     }
 
     /**
@@ -84,6 +91,9 @@ public class TipsterRegistrationStrategy implements UserRegistrationStrategy {
 
         // Primero se guarda el usuario para contar con su identificador persistido.
         userEntity = userRepository.save(userEntity);
+
+        // Referidos: si viene referralCode, lo asociamos al nuevo usuario.
+        referralService.attachReferralOnSignup(userEntity, tipsterReq.getReferralCode());
 
         // Se construye el perfil específico del tipster con los datos complementarios.
         TipsterProfileEntity tipster = UserMapper.INSTANCIA.registerTipsterRequestDTOtoTipsterProfileEntity(tipsterReq);

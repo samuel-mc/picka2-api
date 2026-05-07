@@ -25,6 +25,12 @@ public class TipsterProfileEntity {
     @Column(name = "validated", nullable = false, columnDefinition = "boolean default false")
     private Boolean validated;
 
+    @Column(name = "referral_badge", nullable = false, columnDefinition = "boolean default false")
+    private Boolean referralBadge = false;
+
+    @Column(name = "boost_until")
+    private java.time.LocalDateTime boostUntil;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private UserEntity user;

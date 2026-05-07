@@ -37,4 +37,7 @@ public class RegisterUserRequestDTO {
     )
     private String password;
 
+    // Opcional: código de referido (desde web /r/:code)
+    private String referralCode;
+
 }

@@ -92,7 +92,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
             join roles r on r.id = u.role_id
             left join tipsters_profile tp on tp.user_id = u.id
             where r.name = 'TIPSTER' and coalesce(u.deleted, false) = false
-            order by totalEngagement desc, followersCount desc, postsCount desc, u.id desc
+            order by "totalEngagement" desc, "followersCount" desc, "postsCount" desc, u.id desc
             limit 5
             """, nativeQuery = true)
     List<AdminTipsterAnalyticsProjection> findTopTipstersForAnalytics();

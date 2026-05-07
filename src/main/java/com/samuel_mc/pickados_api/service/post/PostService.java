@@ -58,6 +58,7 @@ import com.samuel_mc.pickados_api.repository.post.SavedPostRepository;
 import com.samuel_mc.pickados_api.repository.post.SportsbookRepository;
 import com.samuel_mc.pickados_api.repository.projection.PostTimelineProjection;
 import com.samuel_mc.pickados_api.service.notification.NotificationService;
+import com.samuel_mc.pickados_api.service.ReferralService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -75,6 +76,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -104,6 +106,7 @@ public class PostService {
     private final PostMediaStorageService postMediaStorageService;
     private final R2Properties r2Properties;
     private final NotificationService notificationService;
+    private final ReferralService referralService;
 
     public PostService(
             PostRepository postRepository,
@@ -124,7 +127,8 @@ public class PostService {
             SportsbookService sportsbookService,
             PostMediaStorageService postMediaStorageService,
             R2Properties r2Properties,
-            NotificationService notificationService
+            NotificationService notificationService,
+            ReferralService referralService
     ) {
         this.postRepository = postRepository;
         this.postPickRepository = postPickRepository;
@@ -145,6 +149,7 @@ public class PostService {
         this.postMediaStorageService = postMediaStorageService;
         this.r2Properties = r2Properties;
         this.notificationService = notificationService;
+        this.referralService = referralService;
     }
 
     @Transactional
@@ -220,7 +225,7 @@ public class PostService {
         UserEntity user = userRepository.findById(currentUserId).orElse(null);
         Set<Long> preferredCompetitionIds = user == null
                 ? Set.of()
-                : user.getPreferredCompetitions().stream().map(CompetitionEntity::getId).collect(java.util.stream.Collectors.toSet());
+                : user.getPreferredCompetitions().stream().map(CompetitionEntity::getId).collect(Collectors.toSet());
 
         if (preferredCompetitionIds.isEmpty()) {
             dto.setItems(spreadAuthors(dto.getItems(), 2));
@@ -450,6 +455,8 @@ public class PostService {
                     follow.setFollowed(followed);
                     followRepository.save(follow);
                     notificationService.notifyFollowStarted(follower, followed);
+                    long count = followRepository.countByFollowerId(currentUserId);
+                    referralService.markActivatedIfEligible(currentUserId, count);
                     return new ToggleStateResponseDTO(true);
                 });
     }
