@@ -10,18 +10,12 @@ buildNumber.properties
 # https://maven.apache.org/wrapper/#usage-without-binary-jar
 .mvn/wrapper/maven-wrapper.jar
 
-src/main/resources/application-local.properties
-src/main/resources/application-prod.properties
-
 # Eclipse m2e generated files
 # Eclipse Core
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
-=======
 HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -52,4 +46,11 @@ build/
 
 ### VS Code ###
 .vscode/
->>>>>>> c06ef01 (initial commit)
+
+### Env / secrets (never commit) ###
+.env
+.env.*
+!.env.example
+!.env.prod.example
+*.secrets.*
+**/*secrets*.properties
