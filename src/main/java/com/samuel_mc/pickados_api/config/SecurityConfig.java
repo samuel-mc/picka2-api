@@ -99,6 +99,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE,"/catalogs/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET,"/sportsbooks").permitAll()
                         .requestMatchers(HttpMethod.GET, "/posts/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/posts/media/**").hasAuthority("ROLE_TIPSTER")
                         .requestMatchers(HttpMethod.POST, "/posts").hasAuthority("ROLE_TIPSTER")
                         .requestMatchers(HttpMethod.PUT, "/posts/*/pick-status").hasAuthority("ROLE_TIPSTER")

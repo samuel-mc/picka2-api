@@ -72,6 +72,12 @@ public class UsersController {
         return ResponseEntity.ok(userProfileService.getPublicProfile(principal.getId(), id));
     }
 
+    @GetMapping("/public/{id}/profile")
+    public ResponseEntity<PublicProfileResponseDTO> getPublicProfileAnonymous(@PathVariable Long id) {
+        // currentUserId=0 -> not a real user id, yields followedByCurrentUser=false and selfProfile=false
+        return ResponseEntity.ok(userProfileService.getPublicProfile(0L, id));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @RequestBody @Valid UpdateUserRequestDTO updateDTO) {
         Optional<UserEntity> userOpt = userRepository.findByIdAndDeletedFalse(id);

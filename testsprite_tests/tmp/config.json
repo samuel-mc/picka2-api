@@ -1,0 +1,23 @@
+{
+  "status": "commited",
+  "type": "backend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:8080",
+  "backendAuthType": "basic token",
+  "backendUsername": "john1237",
+  "backendPassword": "123456",
+  "executionArgs": {
+    "projectName": "pickados-api",
+    "projectPath": "/Users/smedina/develop/picka2/pickados-api",
+    "testIds": [
+      "TC006",
+      "TC007"
+    ],
+    "additionalInstruction": "Ejecutar solo pruebas de feed/timeline. Autenticación: POST /auth/login con JSON {\"username\",\"password\"} y reenviar cookies JWT (no Basic Auth). Si el perfil es local con Postgres y AdminSeederConfig, usar usuario admin y contraseña 123456. Validar rutas reales del OpenAPI para el feed (p.ej. /posts o /posts/feed).",
+    "serverMode": "development",
+    "envs": {
+      "API_KEY": "sk-user-rAGK4mN5d5TfWy8ZabeLh5rZSJtay3XJftg73whuRLYBM-x9XYjP89M3eh1owxoxMfrcY2tUKif_GApjo3xsrFFn9y33d2262sYGXc8Wuh4z_VpRVA6Q2SlyktJE11H69k8"
+    }
+  },
+  "serverPort": 54018
+}

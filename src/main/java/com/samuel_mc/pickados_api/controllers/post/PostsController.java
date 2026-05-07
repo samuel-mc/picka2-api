@@ -87,6 +87,15 @@ public class PostsController {
         return responseUtils.generateSuccessResponse(postService.createPost(requireUserId(principal), request));
     }
 
+    @GetMapping
+    public ResponseEntity<List<PostResponseDTO>> getTimelineCompat(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(postService.getFeed(requireUserId(principal), page, size).getItems());
+    }
+
     @GetMapping("/feed")
     public ResponseEntity<GenericResponseDTO<PagedResponseDTO<PostResponseDTO>>> getFeed(
             @AuthenticationPrincipal CustomUserDetails principal,
@@ -134,6 +143,15 @@ public class PostsController {
     @GetMapping("/public/{postId}")
     public ResponseEntity<GenericResponseDTO<PostResponseDTO>> getPublicDetail(@PathVariable Long postId) {
         return responseUtils.generateSuccessResponse(postService.getPublicPostDetail(postId));
+    }
+
+    @GetMapping("/public/users/{userId}")
+    public ResponseEntity<GenericResponseDTO<PagedResponseDTO<PostResponseDTO>>> getPublicPostsByUser(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return responseUtils.generateSuccessResponse(postService.getPublicPostsByUser(userId, page, size));
     }
 
     @PostMapping("/{postId}/comments")

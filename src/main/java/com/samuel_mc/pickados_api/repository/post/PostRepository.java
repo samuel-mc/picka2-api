@@ -16,6 +16,15 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
 
     @Query("""
             select p from PostEntity p
+            where p.author.id = :authorId
+              and p.visibility = com.samuel_mc.pickados_api.entity.enums.PostVisibility.PUBLIC
+              and p.author.deleted = false
+            order by p.createdAt desc
+            """)
+    Page<PostEntity> findPublicByAuthorId(@Param("authorId") Long authorId, Pageable pageable);
+
+    @Query("""
+            select p from PostEntity p
             where p.author.deleted = false and (
                 p.visibility = com.samuel_mc.pickados_api.entity.enums.PostVisibility.PUBLIC
                 or p.author.id = :currentUserId
@@ -32,14 +41,14 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
     Page<PostEntity> findFeed(@Param("currentUserId") Long currentUserId, Pageable pageable);
 
     @Query(value = """
-            select t.postId as postId, t.eventAt as eventAt, t.repostId as repostId, t.repostUserId as repostUserId, t.repostCreatedAt as repostCreatedAt
+            select t."postId" as "postId", t."eventAt" as "eventAt", t."repostId" as "repostId", t."repostUserId" as "repostUserId", t."repostCreatedAt" as "repostCreatedAt"
             from (
                 select
-                    p.id as postId,
-                    p.created_at as eventAt,
-                    null as repostId,
-                    null as repostUserId,
-                    null as repostCreatedAt
+                    p.id as "postId",
+                    p.created_at as "eventAt",
+                    null as "repostId",
+                    null as "repostUserId",
+                    null as "repostCreatedAt"
                 from posts p
                 join users author on author.id = p.user_id
                 where coalesce(author.deleted, false) = false
@@ -58,18 +67,28 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
                 union all
 
                 select
-                    p.id as postId,
-                    rp.created_at as eventAt,
-                    rp.id as repostId,
-                    rp.user_id as repostUserId,
-                    rp.created_at as repostCreatedAt
+                    p.id as "postId",
+                    rp.created_at as "eventAt",
+                    rp.id as "repostId",
+                    rp.user_id as "repostUserId",
+                    rp.created_at as "repostCreatedAt"
                 from post_reposts rp
                 join posts p on p.id = rp.post_id
                 join users author on author.id = p.user_id
                 join users reposter on reposter.id = rp.user_id
                 where coalesce(author.deleted, false) = false
                   and coalesce(reposter.deleted, false) = false
-                  and p.visibility <> 'PRIVATE'
+                  and (
+                    p.visibility = 'PUBLIC'
+                    or p.user_id = :currentUserId
+                    or (
+                        p.visibility = 'FOLLOWERS_ONLY'
+                        and exists (
+                            select 1 from follows f2
+                            where f2.follower_id = :currentUserId and f2.followed_id = p.user_id
+                        )
+                    )
+                  )
                   and (
                     rp.user_id = :currentUserId
                     or exists (
@@ -78,7 +97,7 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
                     )
                   )
             ) t
-            order by t.eventAt desc, t.postId desc
+            order by t."eventAt" desc, t."postId" desc
             """,
             countQuery = """
             select count(*)
@@ -108,7 +127,17 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
                 join users reposter on reposter.id = rp.user_id
                 where coalesce(author.deleted, false) = false
                   and coalesce(reposter.deleted, false) = false
-                  and p.visibility <> 'PRIVATE'
+                  and (
+                    p.visibility = 'PUBLIC'
+                    or p.user_id = :currentUserId
+                    or (
+                        p.visibility = 'FOLLOWERS_ONLY'
+                        and exists (
+                            select 1 from follows f2
+                            where f2.follower_id = :currentUserId and f2.followed_id = p.user_id
+                        )
+                    )
+                  )
                   and (
                     rp.user_id = :currentUserId
                     or exists (
@@ -139,14 +168,14 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
     Page<PostEntity> findByAuthorVisibleToUser(@Param("authorId") Long authorId, @Param("currentUserId") Long currentUserId, Pageable pageable);
 
     @Query(value = """
-            select t.postId as postId, t.eventAt as eventAt, t.repostId as repostId, t.repostUserId as repostUserId, t.repostCreatedAt as repostCreatedAt
+            select t."postId" as "postId", t."eventAt" as "eventAt", t."repostId" as "repostId", t."repostUserId" as "repostUserId", t."repostCreatedAt" as "repostCreatedAt"
             from (
                 select
-                    p.id as postId,
-                    p.created_at as eventAt,
-                    null as repostId,
-                    null as repostUserId,
-                    null as repostCreatedAt
+                    p.id as "postId",
+                    p.created_at as "eventAt",
+                    null as "repostId",
+                    null as "repostUserId",
+                    null as "repostCreatedAt"
                 from posts p
                 join users author on author.id = p.user_id
                 where p.user_id = :authorId
@@ -166,11 +195,11 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
                 union all
 
                 select
-                    p.id as postId,
-                    rp.created_at as eventAt,
-                    rp.id as repostId,
-                    rp.user_id as repostUserId,
-                    rp.created_at as repostCreatedAt
+                    p.id as "postId",
+                    rp.created_at as "eventAt",
+                    rp.id as "repostId",
+                    rp.user_id as "repostUserId",
+                    rp.created_at as "repostCreatedAt"
                 from post_reposts rp
                 join posts p on p.id = rp.post_id
                 join users reposter on reposter.id = rp.user_id
@@ -178,14 +207,8 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
                 where rp.user_id = :authorId
                   and coalesce(reposter.deleted, false) = false
                   and coalesce(author.deleted, false) = false
-                  and p.visibility <> 'PRIVATE'
                   and (
-                    :authorId = :currentUserId
-                    or exists (
-                        select 1 from follows f
-                        where f.follower_id = :currentUserId and f.followed_id = :authorId
-                    )
-                    or p.visibility = 'PUBLIC'
+                    p.visibility = 'PUBLIC'
                     or p.user_id = :currentUserId
                     or (
                         p.visibility = 'FOLLOWERS_ONLY'
@@ -196,7 +219,7 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
                     )
                   )
             ) t
-            order by t.eventAt desc, t.postId desc
+            order by t."eventAt" desc, t."postId" desc
             """,
             countQuery = """
             select count(*)
@@ -228,14 +251,8 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
                 where rp.user_id = :authorId
                   and coalesce(reposter.deleted, false) = false
                   and coalesce(author.deleted, false) = false
-                  and p.visibility <> 'PRIVATE'
                   and (
-                    :authorId = :currentUserId
-                    or exists (
-                        select 1 from follows f
-                        where f.follower_id = :currentUserId and f.followed_id = :authorId
-                    )
-                    or p.visibility = 'PUBLIC'
+                    p.visibility = 'PUBLIC'
                     or p.user_id = :currentUserId
                     or (
                         p.visibility = 'FOLLOWERS_ONLY'
@@ -263,11 +280,11 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
     Page<PostEntity> findFollowingFeed(@Param("currentUserId") Long currentUserId, Pageable pageable);
 
     @Query(value = """
-            select t.postId as postId, t.eventAt as eventAt, null as repostId, null as repostUserId, null as repostCreatedAt
+            select t."postId" as "postId", t."eventAt" as "eventAt", null as "repostId", null as "repostUserId", null as "repostCreatedAt"
             from (
                 select
-                    p.id as postId,
-                    p.created_at as eventAt,
+                    p.id as "postId",
+                    p.created_at as "eventAt",
                     (
                         (coalesce(r.likes, 0) * 2)
                         + (coalesce(c.comments, 0) * 3)
@@ -276,9 +293,9 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
                         - (coalesce(r.dislikes, 0) * 2)
                         + (
                             case
-                                when timestampdiff(hour, p.created_at, now()) < 6 then 20
-                                when timestampdiff(hour, p.created_at, now()) < 24 then 10
-                                when timestampdiff(hour, p.created_at, now()) < 72 then 5
+                                when (extract(epoch from (now() - p.created_at)) / 3600.0) < 6 then 20
+                                when (extract(epoch from (now() - p.created_at)) / 3600.0) < 24 then 10
+                                when (extract(epoch from (now() - p.created_at)) / 3600.0) < 72 then 5
                                 else 0
                             end
                         )
@@ -310,9 +327,9 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
                 ) rp on rp.post_id = p.id
                 where coalesce(author.deleted, false) = false
                   and p.visibility = 'PUBLIC'
-                  and p.created_at >= (now() - interval 7 day)
+                  and p.created_at >= (now() - interval '7 days')
             ) t
-            order by t.featuredScore desc, t.eventAt desc, t.postId desc
+            order by t.featuredScore desc, t."eventAt" desc, t."postId" desc
             """,
             countQuery = """
             select count(*)
@@ -320,7 +337,7 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
             join users author on author.id = p.user_id
             where coalesce(author.deleted, false) = false
               and p.visibility = 'PUBLIC'
-              and p.created_at >= (now() - interval 7 day)
+              and p.created_at >= (now() - interval '7 days')
             """,
             nativeQuery = true)
     Page<PostTimelineProjection> findDiscoverTimeline(Pageable pageable);
@@ -345,7 +362,9 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
 
     @Query("""
             select p from PostEntity p
-            where p.id = :postId and (
+            where p.id = :postId
+              and p.author.deleted = false
+              and (
                 p.visibility = com.samuel_mc.pickados_api.entity.enums.PostVisibility.PUBLIC
                 or p.author.id = :currentUserId
                 or (

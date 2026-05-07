@@ -42,7 +42,6 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Locale;
 import java.time.Duration;
@@ -64,6 +63,7 @@ public class AuthController {
     private final boolean authCookieSecure;
     private final String authCookieSameSite;
     private final long jwtExpirationMs;
+    private static final String JWT_COMPAT_COOKIE_NAME = "jwt";
 
     public AuthController(AuthenticationManager authenticationManager, UserRegistrationFacade userRegistrationFacade,
             JwtUtil jwtUtil, ResponseUtils responseUtils, EmailVerificationService emailVerificationService,
@@ -81,9 +81,9 @@ public class AuthController {
         this.passwordResetService = passwordResetService;
         this.authRateLimitService = authRateLimitService;
         this.userRepository = userRepository;
-        this.authCookieName = authCookieName;
+        this.authCookieName = (authCookieName == null || authCookieName.isBlank()) ? "picka2_auth" : authCookieName;
         this.authCookieSecure = authCookieSecure;
-        this.authCookieSameSite = authCookieSameSite;
+        this.authCookieSameSite = (authCookieSameSite == null || authCookieSameSite.isBlank()) ? "Lax" : authCookieSameSite;
         this.jwtExpirationMs = jwtExpirationMs;
     }
 
@@ -108,6 +108,7 @@ public class AuthController {
             authRateLimitService.clearLoginFailures(rateLimitKey);
             return ResponseEntity.ok()
                     .header("Set-Cookie", buildAuthCookie(token).toString())
+                    .header("Set-Cookie", buildJwtCompatCookie(token).toString())
                     .body(buildAuthSessionResponse(userDetails));
         } catch (AuthenticationException ex) {
             authRateLimitService.recordLoginFailure(rateLimitKey);
@@ -127,6 +128,7 @@ public class AuthController {
     public ResponseEntity<GenericResponseDTO<String>> logout() {
         return ResponseEntity.ok()
                 .header("Set-Cookie", buildExpiredAuthCookie().toString())
+                .header("Set-Cookie", buildExpiredJwtCompatCookie().toString())
                 .body(GenericResponseDTO.<String>builder()
                         .success(true)
                         .code("SUCCESS")
@@ -259,6 +261,7 @@ public class AuthController {
         return new AuthSessionResponseDTO(userDetails.getId(), userDetails.getUsername(), role);
     }
 
+    @SuppressWarnings("null")
     private ResponseCookie buildAuthCookie(String token) {
         return ResponseCookie.from(authCookieName, token)
                 .httpOnly(true)
@@ -269,8 +272,31 @@ public class AuthController {
                 .build();
     }
 
+    @SuppressWarnings("null")
     private ResponseCookie buildExpiredAuthCookie() {
         return ResponseCookie.from(authCookieName, "")
+                .httpOnly(true)
+                .secure(authCookieSecure)
+                .sameSite(authCookieSameSite)
+                .path("/")
+                .maxAge(Duration.ZERO)
+                .build();
+    }
+
+    @SuppressWarnings("null")
+    private ResponseCookie buildJwtCompatCookie(String token) {
+        return ResponseCookie.from(JWT_COMPAT_COOKIE_NAME, token)
+                .httpOnly(true)
+                .secure(authCookieSecure)
+                .sameSite(authCookieSameSite)
+                .path("/")
+                .maxAge(Duration.ofMillis(jwtExpirationMs))
+                .build();
+    }
+
+    @SuppressWarnings("null")
+    private ResponseCookie buildExpiredJwtCompatCookie() {
+        return ResponseCookie.from(JWT_COMPAT_COOKIE_NAME, "")
                 .httpOnly(true)
                 .secure(authCookieSecure)
                 .sameSite(authCookieSameSite)

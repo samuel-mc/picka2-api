@@ -39,7 +39,6 @@ import com.samuel_mc.pickados_api.entity.SportsbookEntity;
 import com.samuel_mc.pickados_api.entity.TipsterProfileEntity;
 import com.samuel_mc.pickados_api.entity.UserEntity;
 import com.samuel_mc.pickados_api.entity.enums.PostType;
-import com.samuel_mc.pickados_api.entity.enums.PostVisibility;
 import com.samuel_mc.pickados_api.entity.enums.ReactionType;
 import com.samuel_mc.pickados_api.entity.enums.ResultStatus;
 import com.samuel_mc.pickados_api.repository.TipsterProfileRepository;
@@ -229,6 +228,12 @@ public class PostService {
     public PagedResponseDTO<PostResponseDTO> getPostsByUser(Long currentUserId, Long authorId, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
         return mapTimelinePage(postRepository.findTimelineByAuthorVisibleToUser(authorId, currentUserId, pageable), currentUserId);
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponseDTO<PostResponseDTO> getPublicPostsByUser(Long authorId, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
+        return mapPage(postRepository.findPublicByAuthorId(authorId, pageable), null);
     }
 
     @Transactional(readOnly = true)

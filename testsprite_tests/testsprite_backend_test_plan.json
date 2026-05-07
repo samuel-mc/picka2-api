@@ -1,0 +1,52 @@
+[
+  {
+    "id": "TC001",
+    "title": "local_postgresql_environment_connection",
+    "description": "Verify that the Spring Boot application connects successfully to the local PostgreSQL 16 instance started via docker-compose.postgres.yml using the local profile with correct database and credentials."
+  },
+  {
+    "id": "TC002",
+    "title": "local_postgresql_environment_failure_handling",
+    "description": "Simulate PostgreSQL startup failure due to port conflict or container issue and verify that the failure is clearly logged and the developer is informed to fix the environment before retrying."
+  },
+  {
+    "id": "TC003",
+    "title": "local_admin_seeder_creation",
+    "description": "Start the application with spring.profiles.active=local and verify that the seeder creates the ADMIN role if missing and creates the default admin user with correct properties without duplication on restart."
+  },
+  {
+    "id": "TC004",
+    "title": "local_admin_seeder_skip_existing",
+    "description": "Start the application with spring.profiles.active=local and verify that if the ADMIN role and admin user already exist, the seeder skips creation and no duplicate records are created."
+  },
+  {
+    "id": "TC005",
+    "title": "local_admin_seeder_no_run_in_production",
+    "description": "Start the application with spring.profiles.active=prod and verify that the local admin seeder does not run and no default admin account is created, ensuring production data remains unchanged."
+  },
+  {
+    "id": "TC006",
+    "title": "feed_timeline_query_excludes_soft_deleted_users",
+    "description": "As an authenticated user, call GET /posts/** and verify that posts from authors with deleted=true are excluded from the feed or timeline results."
+  },
+  {
+    "id": "TC007",
+    "title": "feed_timeline_query_respects_visibility_rules",
+    "description": "As an authenticated user, verify that PUBLIC posts are shown, FOLLOWERS_ONLY posts are shown only to followers or the author, and PRIVATE posts are hidden from third parties in GET /posts/** responses."
+  },
+  {
+    "id": "TC008",
+    "title": "feed_timeline_query_non_follower_access",
+    "description": "As an authenticated user who is not a follower, verify that FOLLOWERS_ONLY and PRIVATE posts from non-followed authors are omitted and only allowed PUBLIC content is returned in GET /posts/**."
+  },
+  {
+    "id": "TC009",
+    "title": "feed_timeline_query_excludes_soft_deleted_post_owners",
+    "description": "Verify that GET /posts/** excludes posts or reposts belonging to soft-deleted users by evaluating the deleted flag correctly, ensuring feed remains free of deleted-user content."
+  },
+  {
+    "id": "TC010",
+    "title": "public_post_detail_access_control",
+    "description": "Verify that GET /posts/public/{postId} returns 404 or access-denied response when the post is owned by a deleted author or is a private post, preventing exposure of sensitive content."
+  }
+]
