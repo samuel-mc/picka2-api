@@ -123,6 +123,15 @@ public class PostsController {
         return responseUtils.generateSuccessResponse(postService.getDiscoverFeed(requireUserId(principal), page, size));
     }
 
+    @GetMapping("/feed/for-you")
+    public ResponseEntity<GenericResponseDTO<PagedResponseDTO<PostResponseDTO>>> getForYouFeed(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return responseUtils.generateSuccessResponse(postService.getForYouFeed(requireUserId(principal), page, size));
+    }
+
     @GetMapping("/saved")
     public ResponseEntity<GenericResponseDTO<PagedResponseDTO<PostResponseDTO>>> getSavedPosts(
             @AuthenticationPrincipal CustomUserDetails principal,

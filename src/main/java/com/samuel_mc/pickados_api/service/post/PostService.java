@@ -213,6 +213,49 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
+    public PagedResponseDTO<PostResponseDTO> getForYouFeed(Long currentUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
+        PagedResponseDTO<PostResponseDTO> dto = mapTimelinePage(postRepository.findDiscoverTimeline(pageable), currentUserId);
+
+        UserEntity user = userRepository.findById(currentUserId).orElse(null);
+        Set<Long> preferredCompetitionIds = user == null
+                ? Set.of()
+                : user.getPreferredCompetitions().stream().map(CompetitionEntity::getId).collect(java.util.stream.Collectors.toSet());
+
+        if (preferredCompetitionIds.isEmpty()) {
+            dto.setItems(spreadAuthors(dto.getItems(), 2));
+            return dto;
+        }
+
+        List<PostResponseDTO> ranked = dto.getItems().stream()
+                .sorted((a, b) -> Integer.compare(scoreForYou(b, preferredCompetitionIds), scoreForYou(a, preferredCompetitionIds)))
+                .toList();
+
+        dto.setItems(spreadAuthors(ranked, 2));
+        return dto;
+    }
+
+    private int scoreForYou(PostResponseDTO post, Set<Long> preferredCompetitionIds) {
+        if (post == null) {
+            return 0;
+        }
+
+        int score = 0;
+        if (post.getSimplePick() != null && post.getSimplePick().getLeagueId() != null
+                && preferredCompetitionIds.contains(post.getSimplePick().getLeagueId())) {
+            score += 10;
+        }
+        if (post.getParleySelections() != null) {
+            boolean anyMatch = post.getParleySelections().stream()
+                    .anyMatch(sel -> sel != null && sel.getLeagueId() != null && preferredCompetitionIds.contains(sel.getLeagueId()));
+            if (anyMatch) {
+                score += 6;
+            }
+        }
+        return score;
+    }
+
+    @Transactional(readOnly = true)
     public PostResponseDTO getPostDetail(Long currentUserId, Long postId) {
         return mapPost(getVisiblePost(postId, currentUserId), currentUserId);
     }
