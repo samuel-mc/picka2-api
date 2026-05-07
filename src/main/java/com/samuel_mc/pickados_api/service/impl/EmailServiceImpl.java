@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -25,11 +26,14 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender javaMailSender;
     private final ResourceLoader resourceLoader;
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:}")
     private String fromEmail;
 
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
+
+    @Value("${app.email.sendemail:false}")
+    private boolean sendEmail;
 
     public EmailServiceImpl(JavaMailSender javaMailSender, ResourceLoader resourceLoader) {
         this.javaMailSender = javaMailSender;
@@ -39,10 +43,20 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void sendHtmlEmail(String to, String subject, String text) {
+        if (!sendEmail) {
+            logger.info("Email sending disabled (app.email.sendemail=false). Skipping email to {}", to);
+            return;
+        }
+
         try {
+            Objects.requireNonNull(to, "to");
+            Objects.requireNonNull(subject, "subject");
+            Objects.requireNonNull(text, "text");
+
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail);
+            String safeFromEmail = fromEmail == null ? "" : fromEmail;
+            helper.setFrom(safeFromEmail);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(text, true); // true indicates HTML format
@@ -66,7 +80,17 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void sendEmailWithTemplate(String to, String subject, String templateName, Map<String, String> context) {
+        if (!sendEmail) {
+            logger.info("Email sending disabled (app.email.sendemail=false). Skipping templated email to {}", to);
+            return;
+        }
+
         try {
+            Objects.requireNonNull(to, "to");
+            Objects.requireNonNull(subject, "subject");
+            Objects.requireNonNull(templateName, "templateName");
+            Objects.requireNonNull(context, "context");
+
             Resource resource = resourceLoader.getResource("classpath:templates/" + templateName);
             String htmlTemplate = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
