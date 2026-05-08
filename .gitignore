@@ -1,4 +1,5 @@
 target/
+testsprite_tests/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
@@ -55,5 +56,3 @@ build/
 *.secrets.*
 **/*secrets*.properties
 scripts/seed_catalog_countries_leagues_teams.sql
-
-testsprite_tests/
