@@ -877,6 +877,7 @@ public class PostService {
                         && user.getId() != currentUserId
                         && followRepository.findByFollowerIdAndFollowedId(currentUserId, user.getId()).isPresent()
         );
+        dto.setDeleted(Boolean.TRUE.equals(user.getDeleted()));
         return dto;
     }
 

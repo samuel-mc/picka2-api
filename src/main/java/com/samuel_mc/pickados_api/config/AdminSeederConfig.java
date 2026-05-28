@@ -1,14 +1,18 @@
 package com.samuel_mc.pickados_api.config;
 
 import com.samuel_mc.pickados_api.entity.RoleEntity;
+import com.samuel_mc.pickados_api.entity.TipsterProfileEntity;
 import com.samuel_mc.pickados_api.entity.UserEntity;
 import com.samuel_mc.pickados_api.repository.RoleRepository;
+import com.samuel_mc.pickados_api.repository.TipsterProfileRepository;
 import com.samuel_mc.pickados_api.repository.UserRepository;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDate;
 
 @Configuration
 @Profile("local")
@@ -71,6 +75,51 @@ public class AdminSeederConfig {
             user.setRole(userRole);
 
             userRepository.save(user);
+        };
+    }
+
+    /**
+     * Usuario con {@code ROLE_TIPSTER} para pruebas locales (p. ej. TestSprite): {@code POST /posts} exige este rol.
+     */
+    @Bean
+    public ApplicationRunner seedLocalTipsterForApiTests(
+            UserRepository userRepository,
+            RoleRepository roleRepository,
+            TipsterProfileRepository tipsterProfileRepository,
+            PasswordEncoder passwordEncoder
+    ) {
+        return args -> {
+            String email = "tipster@pickados.local";
+            String username = "tipster";
+
+            if (userRepository.findByEmail(email).isPresent() || userRepository.existsByUsername(username)) {
+                return;
+            }
+
+            RoleEntity tipsterRole = roleRepository.findByName("TIPSTER").orElseGet(() -> {
+                RoleEntity role = new RoleEntity();
+                role.setName("TIPSTER");
+                return roleRepository.save(role);
+            });
+
+            UserEntity user = new UserEntity();
+            user.setName("Local");
+            user.setLastname("Tipster");
+            user.setUsername(username);
+            user.setEmail(email);
+            user.setPassword(passwordEncoder.encode("123456"));
+            user.setActive(true);
+            user.setDeleted(false);
+            user.setRole(tipsterRole);
+            user = userRepository.save(user);
+
+            TipsterProfileEntity profile = new TipsterProfileEntity();
+            profile.setUser(user);
+            profile.setBio("Cuenta sembrada solo en perfil local para pruebas de API.");
+            profile.setBirthDate(LocalDate.of(1990, 1, 15));
+            profile.setValidated(false);
+            profile.setReferralBadge(false);
+            tipsterProfileRepository.save(profile);
         };
     }
 }

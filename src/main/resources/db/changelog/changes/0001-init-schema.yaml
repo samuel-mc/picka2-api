@@ -1,0 +1,1692 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0001-roles
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: roles
+      changes:
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_roles
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_roles_name
+
+  - changeSet:
+      id: 0002-users
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: users
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_users
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: lastname
+                  type: VARCHAR(160)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: username
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role_id
+                  type: BIGINT
+              - column:
+                  name: bio
+                  type: VARCHAR(2000)
+              - column:
+                  name: profile_photo_key
+                  type: VARCHAR(512)
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: username
+            constraintName: uq_users_username
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: email
+            constraintName: uq_users_email
+        - addForeignKeyConstraint:
+            constraintName: fk_users_role
+            baseTableName: users
+            baseColumnNames: role_id
+            referencedTableName: roles
+            referencedColumnNames: id
+            onDelete: SET NULL
+
+  - changeSet:
+      id: 0003-catalog-sports
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: catalog_sports
+      changes:
+        - createTable:
+            tableName: catalog_sports
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_catalog_sports
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(120)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: logo_key
+                  type: VARCHAR(512)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: catalog_sports
+            columnNames: name
+            constraintName: uq_catalog_sports_name
+
+  - changeSet:
+      id: 0004-catalog-countries
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: catalog_countries
+      changes:
+        - createTable:
+            tableName: catalog_countries
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_catalog_countries
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(120)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: logo_key
+                  type: VARCHAR(512)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: catalog_countries
+            columnNames: name
+            constraintName: uq_catalog_countries_name
+
+  - changeSet:
+      id: 0005-catalog-competitions
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: catalog_competitions
+      changes:
+        - createTable:
+            tableName: catalog_competitions
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_catalog_competitions
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: logo_key
+                  type: VARCHAR(512)
+              - column:
+                  name: sport_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: country_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: catalog_competitions
+            columnNames: name,sport_id,country_id
+            constraintName: uq_catalog_competitions_name_sport_country
+        - addForeignKeyConstraint:
+            constraintName: fk_competitions_sport
+            baseTableName: catalog_competitions
+            baseColumnNames: sport_id
+            referencedTableName: catalog_sports
+            referencedColumnNames: id
+            onDelete: RESTRICT
+        - addForeignKeyConstraint:
+            constraintName: fk_competitions_country
+            baseTableName: catalog_competitions
+            baseColumnNames: country_id
+            referencedTableName: catalog_countries
+            referencedColumnNames: id
+            onDelete: RESTRICT
+
+  - changeSet:
+      id: 0006-catalog-teams
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: catalog_teams
+      changes:
+        - createTable:
+            tableName: catalog_teams
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_catalog_teams
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: logo_key
+                  type: VARCHAR(512)
+              - column:
+                  name: competition_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: catalog_teams
+            columnNames: name,competition_id
+            constraintName: uq_catalog_teams_name_competition
+        - addForeignKeyConstraint:
+            constraintName: fk_teams_competition
+            baseTableName: catalog_teams
+            baseColumnNames: competition_id
+            referencedTableName: catalog_competitions
+            referencedColumnNames: id
+            onDelete: RESTRICT
+
+  - changeSet:
+      id: 0007-user-preferences
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: user_preferred_competitions
+      changes:
+        - createTable:
+            tableName: user_preferred_competitions
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: competition_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: user_preferred_competitions
+            columnNames: user_id,competition_id
+            constraintName: uq_user_preferred_competitions
+        - addForeignKeyConstraint:
+            constraintName: fk_user_pref_comp_user
+            baseTableName: user_preferred_competitions
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_user_pref_comp_competition
+            baseTableName: user_preferred_competitions
+            baseColumnNames: competition_id
+            referencedTableName: catalog_competitions
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0008-user-preferred-teams
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: user_preferred_teams
+      changes:
+        - createTable:
+            tableName: user_preferred_teams
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: team_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: user_preferred_teams
+            columnNames: user_id,team_id
+            constraintName: uq_user_preferred_teams
+        - addForeignKeyConstraint:
+            constraintName: fk_user_pref_team_user
+            baseTableName: user_preferred_teams
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_user_pref_team_team
+            baseTableName: user_preferred_teams
+            baseColumnNames: team_id
+            referencedTableName: catalog_teams
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0009-posts
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: posts
+      changes:
+        - createTable:
+            tableName: posts
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_posts
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content
+                  type: VARCHAR(4000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: visibility
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            constraintName: fk_posts_user
+            baseTableName: posts
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0010-post-media
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: post_media
+      changes:
+        - createTable:
+            tableName: post_media
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_post_media
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: url
+                  type: VARCHAR(1024)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            constraintName: fk_post_media_post
+            baseTableName: post_media
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0011-post-tags
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: post_tags
+      changes:
+        - createTable:
+            tableName: post_tags
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_post_tags
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tag
+                  type: VARCHAR(80)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            constraintName: fk_post_tags_post
+            baseTableName: post_tags
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0012-sportsbooks
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: sportsbooks
+      changes:
+        - createTable:
+            tableName: sportsbooks
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_sportsbooks
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(120)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: base_url
+                  type: VARCHAR(255)
+              - column:
+                  name: logo_key
+                  type: VARCHAR(512)
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: sportsbooks
+            columnNames: name
+            constraintName: uq_sportsbooks_name
+
+  - changeSet:
+      id: 0013-post-picks
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: post_picks
+      changes:
+        - createTable:
+            tableName: post_picks
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_post_picks
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sport_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: competition_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sport
+                  type: VARCHAR(255)
+              - column:
+                  name: league
+                  type: VARCHAR(255)
+              - column:
+                  name: stake
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sportsbook_id
+                  type: BIGINT
+              - column:
+                  name: event_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: result_status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: post_picks
+            columnNames: post_id
+            constraintName: uq_post_picks_post_id
+        - addForeignKeyConstraint:
+            constraintName: fk_post_picks_post
+            baseTableName: post_picks
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_post_picks_sport
+            baseTableName: post_picks
+            baseColumnNames: sport_id
+            referencedTableName: catalog_sports
+            referencedColumnNames: id
+            onDelete: RESTRICT
+        - addForeignKeyConstraint:
+            constraintName: fk_post_picks_competition
+            baseTableName: post_picks
+            baseColumnNames: competition_id
+            referencedTableName: catalog_competitions
+            referencedColumnNames: id
+            onDelete: RESTRICT
+        - addForeignKeyConstraint:
+            constraintName: fk_post_picks_sportsbook
+            baseTableName: post_picks
+            baseColumnNames: sportsbook_id
+            referencedTableName: sportsbooks
+            referencedColumnNames: id
+            onDelete: SET NULL
+
+  - changeSet:
+      id: 0014-post-parleys
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: post_parleys
+      changes:
+        - createTable:
+            tableName: post_parleys
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_post_parleys
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sport_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: competition_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sport
+                  type: VARCHAR(255)
+              - column:
+                  name: league
+                  type: VARCHAR(255)
+              - column:
+                  name: stake
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sportsbook_id
+                  type: BIGINT
+              - column:
+                  name: event_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: result_status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: post_parleys
+            columnNames: post_id
+            constraintName: uq_post_parleys_post_id
+        - addForeignKeyConstraint:
+            constraintName: fk_post_parleys_post
+            baseTableName: post_parleys
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_post_parleys_sport
+            baseTableName: post_parleys
+            baseColumnNames: sport_id
+            referencedTableName: catalog_sports
+            referencedColumnNames: id
+            onDelete: RESTRICT
+        - addForeignKeyConstraint:
+            constraintName: fk_post_parleys_competition
+            baseTableName: post_parleys
+            baseColumnNames: competition_id
+            referencedTableName: catalog_competitions
+            referencedColumnNames: id
+            onDelete: RESTRICT
+        - addForeignKeyConstraint:
+            constraintName: fk_post_parleys_sportsbook
+            baseTableName: post_parleys
+            baseColumnNames: sportsbook_id
+            referencedTableName: sportsbooks
+            referencedColumnNames: id
+            onDelete: SET NULL
+
+  - changeSet:
+      id: 0015-parley-selections
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: parley_selections
+      changes:
+        - createTable:
+            tableName: parley_selections
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_parley_selections
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sport_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: competition_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            constraintName: fk_parley_sel_post
+            baseTableName: parley_selections
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_parley_sel_sport
+            baseTableName: parley_selections
+            baseColumnNames: sport_id
+            referencedTableName: catalog_sports
+            referencedColumnNames: id
+            onDelete: RESTRICT
+        - addForeignKeyConstraint:
+            constraintName: fk_parley_sel_competition
+            baseTableName: parley_selections
+            baseColumnNames: competition_id
+            referencedTableName: catalog_competitions
+            referencedColumnNames: id
+            onDelete: RESTRICT
+
+  - changeSet:
+      id: 0016-reactions
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: reactions
+      changes:
+        - createTable:
+            tableName: reactions
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_reactions
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: reactions
+            columnNames: post_id,user_id
+            constraintName: uq_reactions_post_user
+        - addForeignKeyConstraint:
+            constraintName: fk_reactions_post
+            baseTableName: reactions
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_reactions_user
+            baseTableName: reactions
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0017-comments
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: comments
+      changes:
+        - createTable:
+            tableName: comments
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_comments
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: parent_comment_id
+                  type: BIGINT
+              - column:
+                  name: content
+                  type: VARCHAR(1500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            constraintName: fk_comments_post
+            baseTableName: comments
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_comments_user
+            baseTableName: comments
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_comments_parent
+            baseTableName: comments
+            baseColumnNames: parent_comment_id
+            referencedTableName: comments
+            referencedColumnNames: id
+            onDelete: SET NULL
+
+  - changeSet:
+      id: 0018-comment-likes
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: comment_likes
+      changes:
+        - createTable:
+            tableName: comment_likes
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_comment_likes
+                    nullable: false
+              - column:
+                  name: comment_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: comment_likes
+            columnNames: comment_id,user_id
+            constraintName: uq_comment_likes_comment_user
+        - addForeignKeyConstraint:
+            constraintName: fk_comment_likes_comment
+            baseTableName: comment_likes
+            baseColumnNames: comment_id
+            referencedTableName: comments
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_comment_likes_user
+            baseTableName: comment_likes
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0019-follows
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: follows
+      changes:
+        - createTable:
+            tableName: follows
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_follows
+                    nullable: false
+              - column:
+                  name: follower_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: followed_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: follows
+            columnNames: follower_id,followed_id
+            constraintName: uq_follows_follower_followed
+        - addForeignKeyConstraint:
+            constraintName: fk_follows_follower
+            baseTableName: follows
+            baseColumnNames: follower_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_follows_followed
+            baseTableName: follows
+            baseColumnNames: followed_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0020-saved-posts
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: saved_posts
+      changes:
+        - createTable:
+            tableName: saved_posts
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_saved_posts
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: saved_posts
+            columnNames: post_id,user_id
+            constraintName: uq_saved_posts_post_user
+        - addForeignKeyConstraint:
+            constraintName: fk_saved_posts_post
+            baseTableName: saved_posts
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_saved_posts_user
+            baseTableName: saved_posts
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0021-post-views
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: post_views
+      changes:
+        - createTable:
+            tableName: post_views
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_post_views
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: viewed_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: post_views
+            columnNames: post_id,user_id
+            constraintName: uq_post_views_post_user
+        - addForeignKeyConstraint:
+            constraintName: fk_post_views_post
+            baseTableName: post_views
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_post_views_user
+            baseTableName: post_views
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0022-post-reposts
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: post_reposts
+      changes:
+        - createTable:
+            tableName: post_reposts
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_post_reposts
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: post_reposts
+            columnNames: post_id,user_id
+            constraintName: uq_post_reposts_post_user
+        - addForeignKeyConstraint:
+            constraintName: fk_post_reposts_post
+            baseTableName: post_reposts
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_post_reposts_user
+            baseTableName: post_reposts
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0023-post-shares
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: post_shares
+      changes:
+        - createTable:
+            tableName: post_shares
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_post_shares
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: channel
+                  type: VARCHAR(60)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            constraintName: fk_post_shares_post
+            baseTableName: post_shares
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_post_shares_user
+            baseTableName: post_shares
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0024-notifications
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: notifications
+      changes:
+        - createTable:
+            tableName: notifications
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_notifications
+                    nullable: false
+              - column:
+                  name: recipient_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: post_id
+                  type: BIGINT
+              - column:
+                  name: comment_id
+                  type: BIGINT
+              - column:
+                  name: read_at
+                  type: TIMESTAMP
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            constraintName: fk_notifications_recipient
+            baseTableName: notifications
+            baseColumnNames: recipient_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_notifications_actor
+            baseTableName: notifications
+            baseColumnNames: actor_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_notifications_post
+            baseTableName: notifications
+            baseColumnNames: post_id
+            referencedTableName: posts
+            referencedColumnNames: id
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            constraintName: fk_notifications_comment
+            baseTableName: notifications
+            baseColumnNames: comment_id
+            referencedTableName: comments
+            referencedColumnNames: id
+            onDelete: SET NULL
+
+  - changeSet:
+      id: 0025-referral-codes
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: referral_codes
+      changes:
+        - createTable:
+            tableName: referral_codes
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_referral_codes
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: code
+                  type: VARCHAR(24)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: referral_codes
+            columnNames: user_id
+            constraintName: uq_referral_codes_user
+        - addUniqueConstraint:
+            tableName: referral_codes
+            columnNames: code
+            constraintName: uq_referral_codes_code
+        - createIndex:
+            tableName: referral_codes
+            indexName: idx_referral_codes_code
+            unique: true
+            columns:
+              - column:
+                  name: code
+        - addForeignKeyConstraint:
+            constraintName: fk_referral_codes_user
+            baseTableName: referral_codes
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0026-referrals
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: referrals
+      changes:
+        - createTable:
+            tableName: referrals
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_referrals
+                    nullable: false
+              - column:
+                  name: inviter_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: invited_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: activated_at
+                  type: TIMESTAMP
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: referrals
+            indexName: idx_referrals_inviter
+            columns:
+              - column:
+                  name: inviter_user_id
+        - addUniqueConstraint:
+            tableName: referrals
+            columnNames: invited_user_id
+            constraintName: uq_referrals_invited
+        - createIndex:
+            tableName: referrals
+            indexName: idx_referrals_invited
+            unique: true
+            columns:
+              - column:
+                  name: invited_user_id
+        - addForeignKeyConstraint:
+            constraintName: fk_referrals_inviter
+            baseTableName: referrals
+            baseColumnNames: inviter_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_referrals_invited
+            baseTableName: referrals
+            baseColumnNames: invited_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0027-tipsters-profile
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: tipsters_profile
+      changes:
+        - createTable:
+            tableName: tipsters_profile
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_tipsters_profile
+                    nullable: false
+              - column:
+                  name: bio
+                  type: VARCHAR(255)
+              - column:
+                  name: avatar_url
+                  type: VARCHAR(255)
+              - column:
+                  name: birth_date
+                  type: DATE
+              - column:
+                  name: validated
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: referral_badge
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: boost_until
+                  type: TIMESTAMP
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: tipsters_profile
+            columnNames: user_id
+            constraintName: uq_tipsters_profile_user
+        - addForeignKeyConstraint:
+            constraintName: fk_tipsters_profile_user
+            baseTableName: tipsters_profile
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 0028-home-prashes
+      author: pickados
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - not:
+            - tableExists:
+                tableName: home_prashes
+      changes:
+        - createTable:
+            tableName: home_prashes
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_home_prashes
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: home_prashes
+            columnNames: name
+            constraintName: uq_home_prashes_name
+

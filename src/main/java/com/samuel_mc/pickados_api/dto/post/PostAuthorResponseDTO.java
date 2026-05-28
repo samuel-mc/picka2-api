@@ -8,6 +8,8 @@ public class PostAuthorResponseDTO {
     private Boolean validatedTipster;
     private String badge;
     private Boolean followedByCurrentUser;
+    /** Included so clients can assert soft-delete boundaries; feeds omit deleted authors' posts. */
+    private Boolean deleted;
 
     public Long getId() {
         return id;
@@ -63,5 +65,13 @@ public class PostAuthorResponseDTO {
 
     public void setFollowedByCurrentUser(Boolean followedByCurrentUser) {
         this.followedByCurrentUser = followedByCurrentUser;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
     }
 }

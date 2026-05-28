@@ -24,7 +24,6 @@ import com.samuel_mc.pickados_api.dto.mappers.UserMapper;
 import com.samuel_mc.pickados_api.dto.UserResponseDTO;
 import com.samuel_mc.pickados_api.dto.UpdateUserRequestDTO;
 import com.samuel_mc.pickados_api.dto.user.PublicProfileResponseDTO;
-import com.samuel_mc.pickados_api.entity.CustomUserDetails;
 import com.samuel_mc.pickados_api.entity.UserEntity;
 import com.samuel_mc.pickados_api.service.UserProfileService;
 import jakarta.validation.Valid;
@@ -66,10 +65,10 @@ public class UsersController {
 
     @GetMapping("/{id}/profile")
     public ResponseEntity<PublicProfileResponseDTO> getPublicProfile(
-            @AuthenticationPrincipal CustomUserDetails principal,
+            @AuthenticationPrincipal(expression = "id") Long currentUserId,
             @PathVariable Long id
     ) {
-        return ResponseEntity.ok(userProfileService.getPublicProfile(principal.getId(), id));
+        return ResponseEntity.ok(userProfileService.getPublicProfile(currentUserId, id));
     }
 
     @GetMapping("/public/{id}/profile")
@@ -140,6 +139,20 @@ public class UsersController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @PutMapping("/{id}/restore")
+    public ResponseEntity<Void> restoreUser(@PathVariable Long id) {
+        Optional<UserEntity> userOpt = userRepository.findById(id);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        UserEntity user = userOpt.get();
+        user.setDeleted(false);
+        user.setActive(true);
+        userRepository.save(user);
+        return ResponseEntity.noContent().build();
     }
 
     private Optional<String> normalizeRole(String role) {
